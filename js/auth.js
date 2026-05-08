@@ -32,7 +32,10 @@ async function register() {
   if (!email || !pass || !pass2) return showAuthError('Completá todos los campos.');
   if (pass.length < 8) return showAuthError('La contraseña debe tener al menos 8 caracteres.');
   if (pass !== pass2) return showAuthError('Las contraseñas no coinciden.');
-  const { error } = await sb.auth.signUp({ email, password: pass });
+  const { error } = await sb.auth.signUp({
+    email, password: pass,
+    options: { emailRedirectTo: 'https://productivity-pwa.vercel.app' }
+  });
   if (error) showAuthError(error.message);
   else showAuthError('¡Cuenta creada! Revisá tu email para confirmar.');
 }
