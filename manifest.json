@@ -4,8 +4,8 @@
   "description": "Tareas, calendario e ideas personales",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#ffffff",
+  "background_color": "#1a1a1a",
+  "theme_color": "#1a1a1a",
   "orientation": "portrait-primary",
   "icons": [
     { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
