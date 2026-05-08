@@ -46,13 +46,51 @@ function exportJSON() {
   a.click();
 }
 
+function sanitizeImport(data) {
+  const str = (v, max) => typeof v === 'string' ? v.slice(0, max) : '';
+  const bool = (v) => v === true || v === false ? v : false;
+  const num = (v) => typeof v === 'number' ? v : 0;
+  const VALID_PRIORITIES = ['high', 'med', 'low'];
+  const VALID_TAGS = ['diseño', 'tech', 'negocio', 'personal', 'otro'];
+
+  const tasks = Array.isArray(data.tasks) ? data.tasks
+    .filter(t => isValidUUID(t.id))
+    .map(t => ({
+      id: t.id,
+      text: str(t.text, 500),
+      priority: VALID_PRIORITIES.includes(t.priority) ? t.priority : 'med',
+      done: bool(t.done),
+      position: num(t.position),
+    })) : null;
+
+  const events = Array.isArray(data.events) ? data.events
+    .filter(e => isValidUUID(e.id) && /^\d{4}-\d{2}-\d{2}$/.test(e.date))
+    .map(e => ({
+      id: e.id,
+      date: e.date,
+      label: str(e.label, 200),
+    })) : null;
+
+  const ideas = Array.isArray(data.ideas) ? data.ideas
+    .filter(i => isValidUUID(i.id))
+    .map(i => ({
+      id: i.id,
+      name: str(i.name, 200),
+      description: str(i.description || i.desc, 500),
+      tag: VALID_TAGS.includes(i.tag) ? i.tag : 'otro',
+    })) : null;
+
+  return { tasks, events, ideas };
+}
+
 function importJSON(event) {
   const file = event.target.files[0];
   if (!file) return;
   const reader = new FileReader();
   reader.onload = async (e) => {
     try {
-      const data = JSON.parse(e.target.result);
+      const raw = JSON.parse(e.target.result);
+      const data = sanitizeImport(raw);
       if (data.tasks)  LOCAL.set('tasks',  data.tasks);
       if (data.events) LOCAL.set('events', data.events);
       if (data.ideas)  LOCAL.set('ideas',  data.ideas);
