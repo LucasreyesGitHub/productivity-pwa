@@ -114,3 +114,43 @@ select{cursor:pointer}
 .idea-desc{font-size:12px;color:var(--text2);line-height:1.4}
 .idea-del{position:absolute;top:10px;right:10px}
 .export-row{display:flex;gap:8px;flex-wrap:wrap;padding-top:4px}
+
+/* ── Touch: siempre mostrar botones de borrar ─────────────── */
+@media(hover:none){
+  .del-btn{opacity:1!important}
+}
+
+/* ── Prevenir zoom automático en iOS (inputs < 16px) ─────── */
+@media(max-width:768px){
+  input,select,textarea{font-size:16px!important}
+  .auth-card input{font-size:16px!important}
+}
+
+/* ── Mobile ≤ 480px ──────────────────────────────────────── */
+@media(max-width:480px){
+  /* Auth */
+  .auth-card{padding:28px 20px;border-radius:16px}
+
+  /* Topbar: ocultar email para no saturar */
+  .user-label{display:none}
+  .sync-badge{font-size:10px;padding:2px 6px}
+
+  /* Tasks: input ocupa fila completa, select+botón abajo */
+  #section-tasks .input-row{flex-wrap:wrap}
+  #task-input{flex:1 1 100%}
+  #task-priority{flex:1}
+
+  /* Calendario: celdas más grandes para touch */
+  .cal-day{padding:10px 2px;min-height:36px;font-size:14px}
+
+  /* Ideas: inputs apilados */
+  #idea-name,#idea-desc{flex:1 1 100%!important;min-width:0!important}
+  #idea-tag{flex:1 1 auto!important}
+
+  /* Ideas grid: columnas más chicas */
+  .ideas-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}
+
+  /* Evento: input ocupa fila completa */
+  #event-input-row{flex-wrap:wrap}
+  #event-label{flex:1 1 100%}
+}
