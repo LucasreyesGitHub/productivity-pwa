@@ -1,9 +1,9 @@
-const CACHE = 'mi-espacio-v1';
+const CACHE = 'mi-espacio-v2';
 const STATIC = [
   '/', '/index.html', '/css/app.css',
   '/js/config.js', '/js/auth.js', '/js/db.js',
   '/js/tasks.js', '/js/calendar.js', '/js/ideas.js', '/js/app.js',
-  '/manifest.json'
+  '/manifest.json', '/favicon.svg'
 ];
 
 self.addEventListener('install', e => {
@@ -17,11 +17,12 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  if (e.request.url.includes('supabase.co')) return; // no cachear API calls
+  if (e.request.url.includes('supabase.co')) return;
+  if (e.request.url.includes('cdn.jsdelivr.net')) return;
   e.respondWith(
-    caches.match(e.request).then(cached => cached || fetch(e.request).then(res => {
+    caches.match(e.request, { ignoreSearch: true }).then(cached => cached || fetch(e.request).then(res => {
       if (res.ok) caches.open(CACHE).then(c => c.put(e.request, res.clone()));
       return res;
-    }))
+    }).catch(() => caches.match('/index.html')))
   );
 });
