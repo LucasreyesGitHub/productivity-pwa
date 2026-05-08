@@ -13,7 +13,7 @@ async function initApp(uid) {
   await syncAll();
   showSection('tasks');
   // Realtime sync via Supabase channels
-  supabase.channel('realtime-' + uid)
+  sb.channel('realtime-' + uid)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks',  filter: 'user_id=eq.' + uid }, syncAll)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'events', filter: 'user_id=eq.' + uid }, syncAll)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'ideas',  filter: 'user_id=eq.' + uid }, syncAll)

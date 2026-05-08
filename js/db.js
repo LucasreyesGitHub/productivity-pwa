@@ -20,7 +20,7 @@ window.addEventListener('offline', () => { isOnline = false; setSyncStatus('offl
 // ── TASKS ──────────────────────────────────────────────
 async function dbGetTasks() {
   if (!isOnline) return LOCAL.get('tasks');
-  const { data, error } = await supabase.from('tasks').select('*').eq('user_id', userId).order('position');
+  const { data, error } = await sb.from('tasks').select('*').eq('user_id', userId).order('position');
   if (error) return LOCAL.get('tasks');
   LOCAL.set('tasks', data);
   return data;
@@ -34,7 +34,7 @@ async function dbAddTask(task) {
     LOCAL.set('tasks', tasks);
     return item;
   }
-  const { data, error } = await supabase.from('tasks').insert(item).select().single();
+  const { data, error } = await sb.from('tasks').insert(item).select().single();
   if (error) throw error;
   const tasks = LOCAL.get('tasks');
   tasks.unshift(data);
@@ -46,13 +46,13 @@ async function dbUpdateTask(id, changes) {
   const tasks = LOCAL.get('tasks');
   const idx = tasks.findIndex(t => t.id === id);
   if (idx !== -1) { Object.assign(tasks[idx], changes); LOCAL.set('tasks', tasks); }
-  if (isOnline) await supabase.from('tasks').update(changes).eq('id', id).eq('user_id', userId);
+  if (isOnline) await sb.from('tasks').update(changes).eq('id', id).eq('user_id', userId);
 }
 
 async function dbDeleteTask(id) {
   const tasks = LOCAL.get('tasks').filter(t => t.id !== id);
   LOCAL.set('tasks', tasks);
-  if (isOnline) await supabase.from('tasks').delete().eq('id', id).eq('user_id', userId);
+  if (isOnline) await sb.from('tasks').delete().eq('id', id).eq('user_id', userId);
 }
 
 async function dbReorderTasks(orderedIds) {
@@ -61,14 +61,14 @@ async function dbReorderTasks(orderedIds) {
   orderedIds.forEach((id, i) => { const t = tasks.find(t => t.id === id); if (t) t.position = i; });
   LOCAL.set('tasks', tasks);
   if (isOnline) {
-    for (const u of updates) await supabase.from('tasks').update({ position: u.position }).eq('id', u.id).eq('user_id', userId);
+    for (const u of updates) await sb.from('tasks').update({ position: u.position }).eq('id', u.id).eq('user_id', userId);
   }
 }
 
 // ── EVENTS ─────────────────────────────────────────────
 async function dbGetEvents() {
   if (!isOnline) return LOCAL.get('events');
-  const { data, error } = await supabase.from('events').select('*').eq('user_id', userId).order('date');
+  const { data, error } = await sb.from('events').select('*').eq('user_id', userId).order('date');
   if (error) return LOCAL.get('events');
   LOCAL.set('events', data);
   return data;
@@ -82,7 +82,7 @@ async function dbAddEvent(ev) {
     LOCAL.set('events', evs);
     return item;
   }
-  const { data, error } = await supabase.from('events').insert(item).select().single();
+  const { data, error } = await sb.from('events').insert(item).select().single();
   if (error) throw error;
   const evs = LOCAL.get('events');
   evs.push(data);
@@ -92,13 +92,13 @@ async function dbAddEvent(ev) {
 
 async function dbDeleteEvent(id) {
   LOCAL.set('events', LOCAL.get('events').filter(e => e.id !== id));
-  if (isOnline) await supabase.from('events').delete().eq('id', id).eq('user_id', userId);
+  if (isOnline) await sb.from('events').delete().eq('id', id).eq('user_id', userId);
 }
 
 // ── IDEAS ──────────────────────────────────────────────
 async function dbGetIdeas() {
   if (!isOnline) return LOCAL.get('ideas');
-  const { data, error } = await supabase.from('ideas').select('*').eq('user_id', userId).order('created_at', { ascending: false });
+  const { data, error } = await sb.from('ideas').select('*').eq('user_id', userId).order('created_at', { ascending: false });
   if (error) return LOCAL.get('ideas');
   LOCAL.set('ideas', data);
   return data;
@@ -113,7 +113,7 @@ async function dbAddIdea(idea) {
     LOCAL.set('ideas', ideas);
     return item;
   }
-  const { data, error } = await supabase.from('ideas').insert(item).select().single();
+  const { data, error } = await sb.from('ideas').insert(item).select().single();
   if (error) throw error;
   const ideas = LOCAL.get('ideas');
   ideas.unshift(data);
@@ -123,7 +123,7 @@ async function dbAddIdea(idea) {
 
 async function dbDeleteIdea(id) {
   LOCAL.set('ideas', LOCAL.get('ideas').filter(i => i.id !== id));
-  if (isOnline) await supabase.from('ideas').delete().eq('id', id).eq('user_id', userId);
+  if (isOnline) await sb.from('ideas').delete().eq('id', id).eq('user_id', userId);
 }
 
 // ── FULL SYNC ──────────────────────────────────────────
