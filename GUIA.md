@@ -50,6 +50,32 @@ Cuando eso pasa, la app no responde hasta que se reactive desde el dashboard de 
 
 ---
 
+## Seguridad
+
+### Qué protege la app
+
+**Row Level Security (RLS) en Supabase**
+Cada usuario solo puede ver, crear, modificar y eliminar sus propios datos. Aunque alguien obtuviera la clave pública de la API, no puede acceder a los datos de otra persona. Configurado en las tablas `tasks`, `events` e `ideas` con la política `user_id = auth.uid()` en todas las operaciones.
+
+**Autenticación**
+Login y registro manejados por Supabase Auth. Las contraseñas nunca se guardan en texto plano — Supabase las hashea internamente. La sesión se guarda localmente y se renueva automáticamente.
+
+**Protección contra ataques web**
+- XSS: todo el contenido del usuario se escapa antes de mostrarse en pantalla.
+- Clickjacking: la app no puede ser embebida en iframes de otros sitios (`X-Frame-Options: DENY`).
+- Importación maliciosa: los archivos JSON importados se validan campo por campo antes de guardarse.
+
+### Qué es la clave pública de la API
+
+La clave `sb_publishable_...` que aparece en el código es pública por diseño (como las claves de Firebase o Stripe). No da acceso a los datos — eso lo controla el RLS. La clave secreta del servidor nunca está en el código.
+
+### Lo que no cubre
+
+- Si alguien tiene acceso físico al dispositivo desbloqueado, puede ver los datos en pantalla.
+- La app no tiene doble factor de autenticación (2FA). Si alguien obtiene tu contraseña, puede entrar.
+
+---
+
 ## Stack técnico
 
 - Frontend: HTML / CSS / JavaScript vanilla
