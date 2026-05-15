@@ -90,13 +90,22 @@
         </select>
         <button class="btn-primary" onclick="addTask()">Agregar</button>
       </div>
-      <div class="filter-row" id="cat-filter-row">
-        <button class="filter-btn active" onclick="setCategoryFilter('all',this)">Todas</button>
-        <button class="filter-btn" onclick="setCategoryFilter('trabajo',this)">Trabajo</button>
-        <button class="filter-btn" onclick="setCategoryFilter('personal',this)">Personal</button>
-        <button class="filter-btn" onclick="setCategoryFilter('estudio',this)">Estudio</button>
-        <button class="filter-btn" onclick="setCategoryFilter('salud',this)">Salud</button>
-        <button class="filter-btn" onclick="setCategoryFilter('otro',this)">Otro</button>
+      <div class="cat-collapse">
+        <button class="cat-toggle" onclick="toggleCatFilter()">
+          <i class="ti ti-tag"></i>
+          <span id="cat-toggle-label">Categoría</span>
+          <i class="ti ti-chevron-down" id="cat-chevron"></i>
+        </button>
+        <div class="cat-panel" id="cat-panel">
+          <div id="cat-filter-row">
+            <button class="cat-opt active" onclick="setCategoryFilter('all',this)">Todas</button>
+            <button class="cat-opt" onclick="setCategoryFilter('trabajo',this)">Trabajo</button>
+            <button class="cat-opt" onclick="setCategoryFilter('personal',this)">Personal</button>
+            <button class="cat-opt" onclick="setCategoryFilter('estudio',this)">Estudio</button>
+            <button class="cat-opt" onclick="setCategoryFilter('salud',this)">Salud</button>
+            <button class="cat-opt" onclick="setCategoryFilter('otro',this)">Otro</button>
+          </div>
+        </div>
       </div>
       <div class="filter-row" id="status-filter-row">
         <button class="filter-btn active" onclick="setFilter('all',this)">Todas</button>

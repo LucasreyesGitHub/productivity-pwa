@@ -35,10 +35,22 @@ function setFilter(f, btn) {
   renderTasks();
 }
 
+function toggleCatFilter() {
+  const panel   = document.getElementById('cat-panel');
+  const chevron = document.getElementById('cat-chevron');
+  panel.classList.toggle('open');
+  chevron.classList.toggle('open');
+}
+
 function setCategoryFilter(cat, btn) {
   taskCategoryFilter = cat;
-  document.querySelectorAll('#cat-filter-row .filter-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#cat-filter-row .cat-opt').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
+  const labels = { all: 'Categoría', trabajo: 'Trabajo', personal: 'Personal', estudio: 'Estudio', salud: 'Salud', otro: 'Otro' };
+  document.getElementById('cat-toggle-label').textContent = labels[cat];
+  // cerrar el panel al seleccionar
+  document.getElementById('cat-panel').classList.remove('open');
+  document.getElementById('cat-chevron').classList.remove('open');
   renderTasks();
 }
 
