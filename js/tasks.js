@@ -1,13 +1,15 @@
 let taskFilter = 'all';
+let taskCategoryFilter = 'all';
 let dragSrcId = null;
 
 async function addTask() {
   const inp = document.getElementById('task-input');
   const pri = document.getElementById('task-priority').value;
+  const cat = document.getElementById('task-category').value;
   const text = inp.value.trim();
   if (!text) return;
   setSyncStatus('syncing', 'Guardando...');
-  await dbAddTask({ id: crypto.randomUUID(), text, priority: pri, done: false, position: 0 });
+  await dbAddTask({ id: crypto.randomUUID(), text, priority: pri, category: cat, done: false, position: 0 });
   inp.value = '';
   setSyncStatus('synced', 'Sincronizado');
   renderTasks();
@@ -28,7 +30,14 @@ async function deleteTask(id) {
 
 function setFilter(f, btn) {
   taskFilter = f;
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#status-filter-row .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTasks();
+}
+
+function setCategoryFilter(cat, btn) {
+  taskCategoryFilter = cat;
+  document.querySelectorAll('#cat-filter-row .filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   renderTasks();
 }
@@ -36,23 +45,28 @@ function setFilter(f, btn) {
 async function renderTasks() {
   const all = LOCAL.get('tasks');
   const filtered = all.filter(t => {
-    if (taskFilter === 'pending') return !t.done;
-    if (taskFilter === 'done') return t.done;
-    return true;
+    const statusOk = taskFilter === 'all' || (taskFilter === 'pending' ? !t.done : t.done);
+    const catOk = taskCategoryFilter === 'all' || (t.category || 'otro') === taskCategoryFilter;
+    return statusOk && catOk;
   });
   const done = all.filter(t => t.done).length;
   document.getElementById('task-count').textContent = done + '/' + all.length;
   const list = document.getElementById('task-list');
-  const labels = { high: 'Alta', med: 'Media', low: 'Baja' };
+  const priLabels = { high: 'Alta', med: 'Media', low: 'Baja' };
+  const catLabels = { trabajo: 'Trabajo', personal: 'Personal', estudio: 'Estudio', salud: 'Salud', otro: 'Otro' };
   if (!filtered.length) { list.innerHTML = '<div class="empty">Sin tareas</div>'; return; }
-  list.innerHTML = filtered.map(t => `
+  list.innerHTML = filtered.map(t => {
+    const cat = t.category || 'otro';
+    return `
     <div class="task-item" draggable="true" data-id="${t.id}">
       <div class="task-check ${t.done ? 'done' : ''}" onclick="toggleTask('${t.id}')"></div>
       <span class="task-text ${t.done ? 'done' : ''}">${escHtml(t.text)}</span>
-      <span class="priority-badge p-${t.priority}">${labels[t.priority]}</span>
+      <span class="cat-badge cat-${cat}">${catLabels[cat]}</span>
+      <span class="priority-badge p-${t.priority}">${priLabels[t.priority]}</span>
       <button class="del-btn" onclick="deleteTask('${t.id}')" aria-label="eliminar"><i class="ti ti-x"></i></button>
     </div>
-  `).join('');
+  `;
+  }).join('');
   // drag-to-reorder
   list.querySelectorAll('.task-item').forEach(el => {
     el.addEventListener('dragstart', e => { dragSrcId = el.dataset.id; el.classList.add('dragging'); });

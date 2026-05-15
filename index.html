@@ -76,6 +76,13 @@
       </div>
       <div class="input-row">
         <input type="text" id="task-input" placeholder="Nueva tarea..." onkeydown="if(event.key==='Enter')addTask()">
+        <select id="task-category">
+          <option value="trabajo">Trabajo</option>
+          <option value="personal">Personal</option>
+          <option value="estudio">Estudio</option>
+          <option value="salud">Salud</option>
+          <option value="otro">Otro</option>
+        </select>
         <select id="task-priority">
           <option value="high">Alta</option>
           <option value="med" selected>Media</option>
@@ -83,7 +90,15 @@
         </select>
         <button class="btn-primary" onclick="addTask()">Agregar</button>
       </div>
-      <div class="filter-row">
+      <div class="filter-row" id="cat-filter-row">
+        <button class="filter-btn active" onclick="setCategoryFilter('all',this)">Todas</button>
+        <button class="filter-btn" onclick="setCategoryFilter('trabajo',this)">Trabajo</button>
+        <button class="filter-btn" onclick="setCategoryFilter('personal',this)">Personal</button>
+        <button class="filter-btn" onclick="setCategoryFilter('estudio',this)">Estudio</button>
+        <button class="filter-btn" onclick="setCategoryFilter('salud',this)">Salud</button>
+        <button class="filter-btn" onclick="setCategoryFilter('otro',this)">Otro</button>
+      </div>
+      <div class="filter-row" id="status-filter-row">
         <button class="filter-btn active" onclick="setFilter('all',this)">Todas</button>
         <button class="filter-btn" onclick="setFilter('pending',this)">Pendientes</button>
         <button class="filter-btn" onclick="setFilter('done',this)">Completadas</button>
