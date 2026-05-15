@@ -1,4 +1,4 @@
-const CACHE = 'mi-espacio-v2';
+const CACHE = 'mi-espacio-v3';
 const STATIC = [
   '/', '/index.html', '/css/app.css',
   '/js/config.js', '/js/auth.js', '/js/db.js',
