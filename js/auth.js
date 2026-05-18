@@ -40,6 +40,16 @@ async function register() {
   else showAuthError('¡Cuenta creada! Revisá tu email para confirmar.');
 }
 
+async function forgotPassword() {
+  const email = document.getElementById('login-email').value.trim();
+  if (!email) return showAuthError('Ingresá tu email primero.');
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: 'https://productivity-pwa.vercel.app',
+  });
+  if (error) showAuthError(error.message);
+  else showAuthError('✓ Te enviamos un email para resetear la contraseña.');
+}
+
 async function logout() {
   await sb.auth.signOut();
 }

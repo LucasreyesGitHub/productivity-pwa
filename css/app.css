@@ -204,6 +204,23 @@ body {
 
 .auth-card input::placeholder { color: var(--text-3); }
 
+.btn-forgot {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 10px;
+  background: none;
+  border: none;
+  color: var(--text-2);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: center;
+  transition: color 0.15s;
+}
+
+.btn-forgot:hover { color: var(--accent); }
+
 .auth-error {
   background: var(--danger-soft);
   color: var(--danger);
