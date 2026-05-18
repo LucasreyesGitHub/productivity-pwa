@@ -98,6 +98,50 @@ async function submitQuickAdd() {
   renderTasks();
 }
 
+// ── Inline edit popover ────────────────────────────────
+function showEditPopover(anchorEl, items, onSelect) {
+  document.getElementById('task-popover')?.remove();
+  const pop = document.createElement('div');
+  pop.id = 'task-popover';
+  pop.className = 'task-popover';
+  items.forEach(({ label, value, cls }) => {
+    const b = document.createElement('button');
+    b.className = 'task-popover-item' + (cls ? ' ' + cls : '');
+    b.textContent = label;
+    b.onclick = e => { e.stopPropagation(); onSelect(value); pop.remove(); };
+    pop.appendChild(b);
+  });
+  document.body.appendChild(pop);
+  const r = anchorEl.getBoundingClientRect();
+  const spaceBelow = window.innerHeight - r.bottom;
+  const popH = items.length * 34 + 8;
+  const leftPos = Math.min(r.left, window.innerWidth - 160);
+  pop.style.cssText = `position:fixed;z-index:9999;left:${leftPos}px;` +
+    (spaceBelow > popH ? `top:${r.bottom + 6}px` : `bottom:${window.innerHeight - r.top + 6}px`);
+  setTimeout(() => document.addEventListener('click', () => pop.remove(), { once: true }), 0);
+}
+
+async function editPriority(e, id) {
+  e.stopPropagation();
+  showEditPopover(e.currentTarget, [
+    { label: '⬤  High',   value: 'high', cls: 'pop-high' },
+    { label: '⬤  Medium', value: 'med',  cls: 'pop-med'  },
+    { label: '⬤  Low',    value: 'low',  cls: 'pop-low'  },
+  ], async priority => { await dbUpdateTask(id, { priority }); renderTasks(); });
+}
+
+async function editCategory(e, id) {
+  e.stopPropagation();
+  showEditPopover(e.currentTarget, [
+    { label: '—  No category', value: ''         },
+    { label: '●  Trabajo',     value: 'trabajo',  cls: 'pop-cat-trabajo'  },
+    { label: '●  Personal',    value: 'personal', cls: 'pop-cat-personal' },
+    { label: '●  Estudio',     value: 'estudio',  cls: 'pop-cat-estudio'  },
+    { label: '●  Salud',       value: 'salud',    cls: 'pop-cat-salud'    },
+    { label: '●  Otro',        value: 'otro',     cls: 'pop-cat-otro'     },
+  ], async category => { await dbUpdateTask(id, { category: category || null }); renderTasks(); });
+}
+
 // ── Core task operations ───────────────────────────────
 async function toggleTask(id) {
   const tasks = LOCAL.get('tasks');
@@ -170,8 +214,10 @@ async function renderTasks() {
         <button class="task-check${t.done ? ' is-done' : ''}" onclick="toggleTask('${t.id}')" aria-label="Toggle task"></button>
         <span class="task-text">${escHtml(t.text)}</span>
         <div class="task-chips">
-          ${cat ? `<span class="cat-chip cat-${cat}">${catLabels[cat] || cat}</span>` : ''}
-          <span class="pri-dot p-${t.priority || 'med'}"></span>
+          ${cat
+            ? `<span class="cat-chip cat-${cat} is-editable" onclick="editCategory(event,'${t.id}')" title="Change category">${catLabels[cat] || cat}</span>`
+            : `<span class="cat-chip cat-empty is-editable" onclick="editCategory(event,'${t.id}')" title="Add category">+</span>`}
+          <span class="pri-dot p-${t.priority || 'med'} is-editable" onclick="editPriority(event,'${t.id}')" title="Change priority"></span>
           ${dueLabel ? `<span class="due-chip ${dueCls}">${dueLabel}</span>` : ''}
         </div>
         <button class="task-del" onclick="deleteTask('${t.id}')" aria-label="Delete task"><i class="ti ti-x"></i></button>

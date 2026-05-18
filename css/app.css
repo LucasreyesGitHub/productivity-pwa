@@ -1266,6 +1266,60 @@ input::placeholder { color: var(--text-3); }
 
 .export-row { display: flex; gap: 8px; flex-wrap: wrap; padding-top: 4px; }
 
+/* ─── Edit Popover ────────────────────────────────────── */
+.task-popover {
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r);
+  box-shadow: var(--s-float);
+  padding: 4px;
+  min-width: 148px;
+  backdrop-filter: var(--blur-md);
+  -webkit-backdrop-filter: var(--blur-md);
+  animation: slideDown 0.15s var(--ease-out) both;
+}
+
+.task-popover-item {
+  display: block;
+  width: 100%;
+  padding: 7px 12px;
+  border: none;
+  background: none;
+  border-radius: var(--r-sm);
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text-2);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s, color 0.1s;
+  white-space: nowrap;
+}
+
+.task-popover-item:hover { background: var(--surface-2); color: var(--text); }
+
+.pop-high { color: #e5484d; }
+.pop-med  { color: #f59e0b; }
+.pop-low  { color: #22c55e; }
+.pop-cat-trabajo  { color: #0284c7; }
+.pop-cat-personal { color: #ea580c; }
+.pop-cat-estudio  { color: #7c3aed; }
+.pop-cat-salud    { color: #16a34a; }
+.pop-cat-otro     { color: #6b7280; }
+
+/* Editable chips */
+.is-editable { cursor: pointer; }
+.pri-dot.is-editable:hover { transform: scale(1.5); transition: transform 0.15s var(--ease-spring); }
+.cat-chip.is-editable:hover { filter: brightness(0.88); }
+.cat-chip.cat-empty {
+  background: none;
+  color: var(--text-3);
+  font-size: 12px;
+  padding: 1.5px 4px;
+  border: 1px dashed var(--line-strong);
+  opacity: 0;
+}
+.task-row:hover .cat-chip.cat-empty { opacity: 1; }
+
 /* ─── Touch — always show delete btns ─────────────────── */
 @media (hover: none) {
   .task-del, .del-btn { opacity: 1 !important; }

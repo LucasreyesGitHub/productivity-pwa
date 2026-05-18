@@ -29,18 +29,25 @@ async function dbGetTasks() {
 
 async function dbAddTask(task) {
   const item = { ...task, user_id: userId, created_at: new Date().toISOString() };
-  if (!isOnline) {
-    const tasks = LOCAL.get('tasks');
-    tasks.unshift(item);
-    LOCAL.set('tasks', tasks);
-    return item;
-  }
-  const { data, error } = await sb.from('tasks').insert(item).select().single();
-  if (error) throw error;
+
+  // Local-first: always save immediately so UI never blocks
   const tasks = LOCAL.get('tasks');
-  tasks.unshift(data);
+  tasks.unshift(item);
   LOCAL.set('tasks', tasks);
-  return data;
+
+  // Background sync — strip fields not yet in schema (due_date)
+  if (isOnline) {
+    const { due_date, notes, ...sbPayload } = item;
+    sb.from('tasks').insert(sbPayload).select().single().then(({ data, error }) => {
+      if (!error && data) {
+        const all = LOCAL.get('tasks');
+        const idx = all.findIndex(t => t.id === item.id);
+        if (idx !== -1) { all[idx] = { ...data, due_date: item.due_date }; LOCAL.set('tasks', all); }
+      }
+    });
+  }
+
+  return item;
 }
 
 async function dbUpdateTask(id, changes) {
