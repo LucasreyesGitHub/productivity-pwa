@@ -1,20 +1,104 @@
-let taskFilter = 'all';
-let taskCategoryFilter = 'all';
+// tasks.js — Task management with smart filters, quick add, due dates
+
+let currentView = 'inbox';
 let dragSrcId = null;
 
-async function addTask() {
-  const inp = document.getElementById('task-input');
-  const pri = document.getElementById('task-priority').value;
-  const cat = document.getElementById('task-category').value;
-  const text = inp.value.trim();
-  if (!text) return;
+// ── Date helpers ───────────────────────────────────────
+function todayStr() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function in7daysStr() {
+  const d = new Date();
+  d.setDate(d.getDate() + 7);
+  return d.toISOString().split('T')[0];
+}
+
+function fmtDueDate(dateStr) {
+  if (!dateStr) return '';
+  const today = todayStr();
+  if (dateStr === today) return 'Today';
+  const d = new Date(dateStr + 'T12:00:00');
+  const now = new Date();
+  const opts = d.getFullYear() === now.getFullYear()
+    ? { month: 'short', day: 'numeric' }
+    : { month: 'short', day: 'numeric', year: 'numeric' };
+  return d.toLocaleDateString('en-US', opts);
+}
+
+// ── Smart filter logic ─────────────────────────────────
+const VIEW_FILTERS = {
+  inbox:    t => !t.done,
+  today:    t => !t.done && !!t.due_date && t.due_date === todayStr(),
+  upcoming: t => {
+    if (t.done || !t.due_date) return false;
+    const d = t.due_date, today = todayStr(), in7 = in7daysStr();
+    return d > today && d <= in7;
+  },
+  overdue:  t => !t.done && !!t.due_date && t.due_date < todayStr(),
+  completed: t => t.done,
+  'cat-trabajo': t => !t.done && t.category === 'trabajo',
+  'cat-personal': t => !t.done && t.category === 'personal',
+  'cat-estudio':  t => !t.done && t.category === 'estudio',
+  'cat-salud':    t => !t.done && t.category === 'salud',
+  'cat-otro':     t => !t.done && (!t.category || t.category === 'otro'),
+};
+
+const VIEW_TITLES = {
+  inbox: 'Inbox', today: 'Today', upcoming: 'Upcoming',
+  overdue: 'Overdue', completed: 'Completed',
+  'cat-trabajo': 'Trabajo', 'cat-personal': 'Personal',
+  'cat-estudio': 'Estudio', 'cat-salud': 'Salud', 'cat-otro': 'Otro',
+};
+
+// ── Quick add UI ───────────────────────────────────────
+function openQuickAdd() {
+  const qa = document.getElementById('quick-add');
+  if (!qa.hidden) { document.getElementById('qa-input').focus(); return; }
+  qa.hidden = false;
+  // Pre-fill date for today/upcoming views
+  if (currentView === 'today') {
+    document.getElementById('qa-date').value = todayStr();
+  }
+  // Pre-fill category for category views
+  const catMap = { 'cat-trabajo':'trabajo','cat-personal':'personal','cat-estudio':'estudio','cat-salud':'salud','cat-otro':'otro' };
+  if (catMap[currentView]) {
+    document.getElementById('qa-cat').value = catMap[currentView];
+  }
+  document.getElementById('qa-input').focus();
+}
+
+function closeQuickAdd() {
+  const qa = document.getElementById('quick-add');
+  qa.hidden = true;
+  document.getElementById('qa-input').value = '';
+  document.getElementById('qa-cat').value = '';
+  document.getElementById('qa-priority').value = 'med';
+  document.getElementById('qa-date').value = '';
+}
+
+async function submitQuickAdd() {
+  const text = document.getElementById('qa-input').value.trim();
+  if (!text) { document.getElementById('qa-input').focus(); return; }
+  const cat      = document.getElementById('qa-cat').value || null;
+  const priority = document.getElementById('qa-priority').value || 'med';
+  const dueDate  = document.getElementById('qa-date').value || null;
   setSyncStatus('syncing', 'Guardando...');
-  await dbAddTask({ id: crypto.randomUUID(), text, priority: pri, category: cat, done: false, position: 0 });
-  inp.value = '';
+  await dbAddTask({
+    id: crypto.randomUUID(),
+    text,
+    priority,
+    category: cat,
+    due_date: dueDate,
+    done: false,
+    position: 0,
+  });
+  closeQuickAdd();
   setSyncStatus('synced', 'Sincronizado');
   renderTasks();
 }
 
+// ── Core task operations ───────────────────────────────
 async function toggleTask(id) {
   const tasks = LOCAL.get('tasks');
   const t = tasks.find(t => t.id === id);
@@ -28,69 +112,86 @@ async function deleteTask(id) {
   renderTasks();
 }
 
-function setFilter(f, btn) {
-  taskFilter = f;
-  document.querySelectorAll('#status-filter-row .filter-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  renderTasks();
+// ── Badge counts ───────────────────────────────────────
+function updateBadges() {
+  const tasks = LOCAL.get('tasks');
+  const today = todayStr();
+  const in7   = in7daysStr();
+
+  const counts = {
+    inbox:    tasks.filter(t => !t.done).length,
+    today:    tasks.filter(t => !t.done && t.due_date === today).length,
+    upcoming: tasks.filter(t => !t.done && t.due_date && t.due_date > today && t.due_date <= in7).length,
+    overdue:  tasks.filter(t => !t.done && t.due_date && t.due_date < today).length,
+    trabajo:  tasks.filter(t => !t.done && t.category === 'trabajo').length,
+    personal: tasks.filter(t => !t.done && t.category === 'personal').length,
+    estudio:  tasks.filter(t => !t.done && t.category === 'estudio').length,
+    salud:    tasks.filter(t => !t.done && t.category === 'salud').length,
+    otro:     tasks.filter(t => !t.done && (!t.category || t.category === 'otro')).length,
+  };
+
+  for (const [key, count] of Object.entries(counts)) {
+    const el = document.getElementById('cnt-' + key);
+    if (el) el.textContent = count > 0 ? count : '';
+  }
 }
 
-function toggleCatFilter() {
-  const panel   = document.getElementById('cat-panel');
-  const chevron = document.getElementById('cat-chevron');
-  panel.classList.toggle('open');
-  chevron.classList.toggle('open');
-}
-
-function setCategoryFilter(cat, btn) {
-  taskCategoryFilter = cat;
-  document.querySelectorAll('#cat-filter-row .cat-opt').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  const labels = { all: 'Categoría', trabajo: 'Trabajo', personal: 'Personal', estudio: 'Estudio', salud: 'Salud', otro: 'Otro' };
-  document.getElementById('cat-toggle-label').textContent = labels[cat];
-  // cerrar el panel al seleccionar
-  document.getElementById('cat-panel').classList.remove('open');
-  document.getElementById('cat-chevron').classList.remove('open');
-  renderTasks();
-}
-
+// ── Render tasks ───────────────────────────────────────
 async function renderTasks() {
   const all = LOCAL.get('tasks');
-  const filtered = all.filter(t => {
-    const statusOk = taskFilter === 'all' || (taskFilter === 'pending' ? !t.done : t.done);
-    const catOk = taskCategoryFilter === 'all' || (t.category || 'otro') === taskCategoryFilter;
-    return statusOk && catOk;
-  });
-  const done = all.filter(t => t.done).length;
-  document.getElementById('task-count').textContent = done + '/' + all.length;
-  const list = document.getElementById('task-list');
-  const priLabels = { high: 'Alta', med: 'Media', low: 'Baja' };
-  const catLabels = { trabajo: 'Trabajo', personal: 'Personal', estudio: 'Estudio', salud: 'Salud', otro: 'Otro' };
-  if (!filtered.length) { list.innerHTML = '<div class="empty">Sin tareas</div>'; return; }
+  const filterFn = VIEW_FILTERS[currentView] || VIEW_FILTERS.inbox;
+  const filtered = all.filter(filterFn);
+
+  updateBadges();
+
+  const list  = document.getElementById('task-list');
+  const empty = document.getElementById('empty-state');
+  if (!list) return;
+
+  if (!filtered.length) {
+    list.innerHTML = '';
+    if (empty) empty.hidden = false;
+    return;
+  }
+  if (empty) empty.hidden = true;
+
+  const today  = todayStr();
+  const catLabels = { trabajo:'Trabajo', personal:'Personal', estudio:'Estudio', salud:'Salud', otro:'Otro' };
+
   list.innerHTML = filtered.map(t => {
-    const cat = t.category || 'otro';
+    const cat      = t.category;
+    const overdue  = !t.done && t.due_date && t.due_date < today;
+    const isToday  = !t.done && t.due_date === today;
+    const dueCls   = overdue ? 'is-overdue' : isToday ? 'is-today' : '';
+    const dueLabel = t.due_date ? fmtDueDate(t.due_date) : '';
+
     return `
-    <div class="task-item" draggable="true" data-id="${t.id}">
-      <div class="task-check ${t.done ? 'done' : ''}" onclick="toggleTask('${t.id}')"></div>
-      <span class="task-text ${t.done ? 'done' : ''}">${escHtml(t.text)}</span>
-      <span class="cat-badge cat-${cat}">${catLabels[cat]}</span>
-      <span class="priority-badge p-${t.priority}">${priLabels[t.priority]}</span>
-      <button class="del-btn" onclick="deleteTask('${t.id}')" aria-label="eliminar"><i class="ti ti-x"></i></button>
-    </div>
-  `;
+      <div class="task-row${t.done ? ' is-done' : ''}" data-id="${t.id}" draggable="true">
+        <button class="task-check${t.done ? ' is-done' : ''}" onclick="toggleTask('${t.id}')" aria-label="Toggle task"></button>
+        <span class="task-text">${escHtml(t.text)}</span>
+        <div class="task-chips">
+          ${cat ? `<span class="cat-chip cat-${cat}">${catLabels[cat] || cat}</span>` : ''}
+          <span class="pri-dot p-${t.priority || 'med'}"></span>
+          ${dueLabel ? `<span class="due-chip ${dueCls}">${dueLabel}</span>` : ''}
+        </div>
+        <button class="task-del" onclick="deleteTask('${t.id}')" aria-label="Delete task"><i class="ti ti-x"></i></button>
+      </div>
+    `;
   }).join('');
-  // drag-to-reorder
-  list.querySelectorAll('.task-item').forEach(el => {
-    el.addEventListener('dragstart', e => { dragSrcId = el.dataset.id; el.classList.add('dragging'); });
-    el.addEventListener('dragend',   e => { el.classList.remove('dragging'); list.querySelectorAll('.task-item').forEach(r => r.classList.remove('drag-over')); });
+
+  // Drag-to-reorder
+  list.querySelectorAll('.task-row').forEach(el => {
+    el.addEventListener('dragstart', () => { dragSrcId = el.dataset.id; el.classList.add('dragging'); });
+    el.addEventListener('dragend',   () => { el.classList.remove('dragging'); list.querySelectorAll('.task-row').forEach(r => r.classList.remove('drag-over')); });
     el.addEventListener('dragover',  e => { e.preventDefault(); el.classList.add('drag-over'); });
-    el.addEventListener('dragleave', e => { el.classList.remove('drag-over'); });
-    el.addEventListener('drop',      e => {
-      e.preventDefault(); el.classList.remove('drag-over');
+    el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
+    el.addEventListener('drop', e => {
+      e.preventDefault();
+      el.classList.remove('drag-over');
       if (dragSrcId === el.dataset.id) return;
-      const items = [...list.querySelectorAll('.task-item')];
-      const srcIdx = items.findIndex(i => i.dataset.id === dragSrcId);
-      const dstIdx = items.findIndex(i => i.dataset.id === el.dataset.id);
+      const items   = [...list.querySelectorAll('.task-row')];
+      const srcIdx  = items.findIndex(i => i.dataset.id === dragSrcId);
+      const dstIdx  = items.findIndex(i => i.dataset.id === el.dataset.id);
       const ordered = LOCAL.get('tasks').filter(t => filtered.some(f => f.id === t.id));
       const [moved] = ordered.splice(srcIdx, 1);
       ordered.splice(dstIdx, 0, moved);
@@ -100,8 +201,63 @@ async function renderTasks() {
   });
 }
 
+// ── Keyboard shortcuts ─────────────────────────────────
+document.addEventListener('keydown', e => {
+  // Ignore when typing in an input
+  const tag = document.activeElement.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
+    if (e.key === 'Escape') {
+      document.activeElement.blur();
+      closeQuickAdd();
+    }
+    if (e.key === 'Enter' && document.activeElement.id === 'qa-input') {
+      e.preventDefault();
+      submitQuickAdd();
+    }
+    return;
+  }
+
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+  switch (e.key) {
+    case 'n': case 'N':
+      e.preventDefault();
+      openQuickAdd();
+      break;
+    case 'Escape':
+      closeQuickAdd();
+      break;
+    case '1': setViewFromKey('inbox');     break;
+    case '2': setViewFromKey('today');     break;
+    case '3': setViewFromKey('upcoming');  break;
+    case '4': setViewFromKey('overdue');   break;
+    case '5': setViewFromKey('completed'); break;
+    case '[':
+      toggleSidebar();
+      break;
+  }
+});
+
+function setViewFromKey(view) {
+  const btn = document.querySelector(`[data-view="${view}"]`);
+  if (btn) btn.click();
+}
+
+// ── Quick add button wiring ────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('sidebar-new-task')?.addEventListener('click', openQuickAdd);
+  document.getElementById('qa-cancel')?.addEventListener('click', closeQuickAdd);
+  document.getElementById('qa-submit')?.addEventListener('click', submitQuickAdd);
+});
+
+// ── Helpers ────────────────────────────────────────────
 function escHtml(str) {
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
 }
 
 function isValidUUID(str) {

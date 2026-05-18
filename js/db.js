@@ -10,8 +10,9 @@ const LOCAL = {
 
 function setSyncStatus(status, text) {
   const el = document.getElementById('sync-status');
-  el.className = 'sync-badge ' + status;
-  el.textContent = text;
+  if (el) { el.className = 'sync-badge ' + status; el.textContent = text; }
+  const dot = document.getElementById('sync-dot');
+  if (dot) dot.className = 'sync-dot ' + status;
 }
 
 window.addEventListener('online',  () => { isOnline = true;  syncAll(); });

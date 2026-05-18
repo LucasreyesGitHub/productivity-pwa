@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#f0eff5" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#0d0d10" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0f0f11" media="(prefers-color-scheme: dark)">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Mi Espacio">
   <title>Mi Espacio</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%231a1a1a'/><rect x='6' y='6' width='8' height='6' rx='1.5' fill='%23fff'/><rect x='6' y='14' width='8' height='12' rx='1.5' fill='%23fff'/><rect x='18' y='6' width='8' height='12' rx='1.5' fill='%23fff'/><rect x='18' y='20' width='8' height='6' rx='1.5' fill='%23fff'/></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%235b5bd6'/><path d='M8 11h10M8 16h6M8 21h8' stroke='%23fff' stroke-width='2' stroke-linecap='round'/></svg>">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="stylesheet" href="css/app.css">
@@ -21,7 +21,7 @@
 <!-- AUTH SCREEN -->
 <div id="auth-screen" class="screen">
   <div class="auth-card">
-    <div class="auth-logo"><i class="ti ti-layout-dashboard"></i></div>
+    <div class="auth-logo"><i class="ti ti-checks"></i></div>
     <h1>Mi Espacio</h1>
     <p class="auth-sub">Tu workspace personal</p>
     <div class="tabs">
@@ -45,128 +45,219 @@
 
 <!-- APP SCREEN -->
 <div id="app-screen" class="screen hidden">
-  <header class="topbar">
-    <span class="topbar-title"><i class="ti ti-layout-dashboard"></i> Mi Espacio</span>
-    <div class="topbar-right">
-      <span id="sync-status" class="sync-badge"></span>
-      <span id="user-email-label" class="user-label"></span>
-      <button class="icon-btn" onclick="logout()" title="Cerrar sesión"><i class="ti ti-logout"></i></button>
-    </div>
-  </header>
+  <div class="app-layout">
 
-  <nav class="bottom-nav">
-    <button class="nav-btn active" onclick="showSection('tasks')" id="nav-tasks">
-      <i class="ti ti-checks"></i><span>Tareas</span>
-    </button>
-    <button class="nav-btn" onclick="showSection('calendar')" id="nav-calendar">
-      <i class="ti ti-calendar"></i><span>Calendario</span>
-    </button>
-    <button class="nav-btn" onclick="showSection('ideas')" id="nav-ideas">
-      <i class="ti ti-bulb"></i><span>Ideas</span>
-    </button>
-  </nav>
-
-  <main class="content">
-
-    <!-- TASKS -->
-    <section id="section-tasks" class="section">
-      <div class="section-header">
-        <h2>Tareas</h2>
-        <span id="task-count" class="count-badge"></span>
-      </div>
-      <div class="input-row">
-        <input type="text" id="task-input" placeholder="Nueva tarea..." onkeydown="if(event.key==='Enter')addTask()">
-        <select id="task-category">
-          <option value="trabajo">Trabajo</option>
-          <option value="personal">Personal</option>
-          <option value="estudio">Estudio</option>
-          <option value="salud">Salud</option>
-          <option value="otro">Otro</option>
-        </select>
-        <select id="task-priority">
-          <option value="high">Alta</option>
-          <option value="med" selected>Media</option>
-          <option value="low">Baja</option>
-        </select>
-        <button class="btn-primary" onclick="addTask()">Agregar</button>
-      </div>
-      <div class="cat-collapse">
-        <button class="cat-toggle" onclick="toggleCatFilter()">
-          <i class="ti ti-tag"></i>
-          <span id="cat-toggle-label">Categoría</span>
-          <i class="ti ti-chevron-down" id="cat-chevron"></i>
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-hdr">
+        <div class="brand-mark">
+          <span class="brand-icon"><i class="ti ti-checks"></i></span>
+          <span class="brand-name">Mi Espacio</span>
+        </div>
+        <button class="sidebar-toggle-btn" id="sidebar-toggle" title="Collapse sidebar">
+          <i class="ti ti-layout-sidebar-left-collapse"></i>
         </button>
-        <div class="cat-panel" id="cat-panel">
-          <div id="cat-filter-row">
-            <button class="cat-opt active" onclick="setCategoryFilter('all',this)">Todas</button>
-            <button class="cat-opt" onclick="setCategoryFilter('trabajo',this)">Trabajo</button>
-            <button class="cat-opt" onclick="setCategoryFilter('personal',this)">Personal</button>
-            <button class="cat-opt" onclick="setCategoryFilter('estudio',this)">Estudio</button>
-            <button class="cat-opt" onclick="setCategoryFilter('salud',this)">Salud</button>
-            <button class="cat-opt" onclick="setCategoryFilter('otro',this)">Otro</button>
+      </div>
+
+      <button class="sidebar-new" id="sidebar-new-task">
+        <i class="ti ti-plus"></i>
+        <span>New Task</span>
+        <kbd>N</kbd>
+      </button>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <span class="nav-label">Smart Lists</span>
+          <button class="nav-item active" data-view="inbox">
+            <i class="ti ti-inbox"></i>
+            <span>Inbox</span>
+            <span class="nav-badge" id="cnt-inbox"></span>
+          </button>
+          <button class="nav-item" data-view="today">
+            <i class="ti ti-sun"></i>
+            <span>Today</span>
+            <span class="nav-badge" id="cnt-today"></span>
+          </button>
+          <button class="nav-item" data-view="upcoming">
+            <i class="ti ti-calendar-event"></i>
+            <span>Upcoming</span>
+            <span class="nav-badge" id="cnt-upcoming"></span>
+          </button>
+          <button class="nav-item nav-item--alert" data-view="overdue">
+            <i class="ti ti-clock-exclamation"></i>
+            <span>Overdue</span>
+            <span class="nav-badge nav-badge--alert" id="cnt-overdue"></span>
+          </button>
+          <button class="nav-item" data-view="completed">
+            <i class="ti ti-circle-check"></i>
+            <span>Completed</span>
+          </button>
+        </div>
+
+        <div class="nav-section">
+          <span class="nav-label">Categories</span>
+          <button class="nav-item" data-view="cat-trabajo">
+            <span class="cat-dot cat-trabajo"></span>
+            <span>Trabajo</span>
+            <span class="nav-badge" id="cnt-trabajo"></span>
+          </button>
+          <button class="nav-item" data-view="cat-personal">
+            <span class="cat-dot cat-personal"></span>
+            <span>Personal</span>
+            <span class="nav-badge" id="cnt-personal"></span>
+          </button>
+          <button class="nav-item" data-view="cat-estudio">
+            <span class="cat-dot cat-estudio"></span>
+            <span>Estudio</span>
+            <span class="nav-badge" id="cnt-estudio"></span>
+          </button>
+          <button class="nav-item" data-view="cat-salud">
+            <span class="cat-dot cat-salud"></span>
+            <span>Salud</span>
+            <span class="nav-badge" id="cnt-salud"></span>
+          </button>
+          <button class="nav-item" data-view="cat-otro">
+            <span class="cat-dot cat-otro"></span>
+            <span>Otro</span>
+            <span class="nav-badge" id="cnt-otro"></span>
+          </button>
+        </div>
+
+        <div class="nav-divider"></div>
+
+        <div class="nav-section">
+          <button class="nav-item" data-section="calendar">
+            <i class="ti ti-calendar"></i>
+            <span>Calendar</span>
+          </button>
+          <button class="nav-item" data-section="ideas">
+            <i class="ti ti-bulb"></i>
+            <span>Ideas</span>
+          </button>
+        </div>
+      </nav>
+
+      <div class="sidebar-foot">
+        <span class="sync-dot" id="sync-dot" title="Sync status"></span>
+        <span id="user-email-label" class="sidebar-user-email"></span>
+        <button class="icon-btn sidebar-logout" onclick="logout()" title="Sign out">
+          <i class="ti ti-logout"></i>
+        </button>
+      </div>
+    </aside>
+
+    <!-- BACKDROP (mobile) -->
+    <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
+    <!-- MAIN -->
+    <div class="app-body">
+      <header class="topbar">
+        <button class="icon-btn menu-btn" id="menu-btn" title="Open menu">
+          <i class="ti ti-menu-2"></i>
+        </button>
+        <h1 class="page-title" id="page-title">Inbox</h1>
+        <!-- legacy sync element kept for db.js compatibility -->
+        <span id="sync-status" class="sync-badge" style="display:none"></span>
+      </header>
+
+      <main class="content">
+
+        <!-- TASKS -->
+        <section id="section-tasks" class="section">
+
+          <!-- Quick add panel -->
+          <div class="quick-add" id="quick-add" hidden>
+            <div class="qa-card">
+              <div class="qa-input-wrap">
+                <i class="ti ti-circle-dashed qa-icon"></i>
+                <input id="qa-input" class="qa-input" placeholder="Task name…" autocomplete="off">
+              </div>
+              <div class="qa-meta">
+                <select id="qa-cat" class="qa-select">
+                  <option value="">No category</option>
+                  <option value="trabajo">Trabajo</option>
+                  <option value="personal">Personal</option>
+                  <option value="estudio">Estudio</option>
+                  <option value="salud">Salud</option>
+                  <option value="otro">Otro</option>
+                </select>
+                <select id="qa-priority" class="qa-select">
+                  <option value="med">Medium</option>
+                  <option value="high">High</option>
+                  <option value="low">Low</option>
+                </select>
+                <input id="qa-date" type="date" class="qa-date">
+              </div>
+              <div class="qa-footer">
+                <button class="qa-cancel" id="qa-cancel">Cancel <kbd>Esc</kbd></button>
+                <button class="qa-submit" id="qa-submit">Add Task</button>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
-      <div class="filter-row" id="status-filter-row">
-        <button class="filter-btn active" onclick="setFilter('all',this)">Todas</button>
-        <button class="filter-btn" onclick="setFilter('pending',this)">Pendientes</button>
-        <button class="filter-btn" onclick="setFilter('done',this)">Completadas</button>
-      </div>
-      <div id="task-list" class="list"></div>
-    </section>
 
-    <!-- CALENDAR -->
-    <section id="section-calendar" class="section hidden">
-      <div class="cal-header">
-        <button class="icon-btn" onclick="changeMonth(-1)"><i class="ti ti-chevron-left"></i></button>
-        <h2 id="cal-month-label"></h2>
-        <button class="icon-btn" onclick="changeMonth(1)"><i class="ti ti-chevron-right"></i></button>
-      </div>
-      <div class="cal-grid" id="cal-grid"></div>
-      <div class="event-add-area">
-        <p id="selected-day-label" class="selected-label">Seleccioná un día para agregar un evento</p>
-        <div class="input-row" id="event-input-row" style="display:none">
-          <input type="text" id="event-label" placeholder="Nombre del evento..." onkeydown="if(event.key==='Enter')addEvent()">
-          <button class="btn-primary" onclick="addEvent()">Marcar</button>
-        </div>
-      </div>
-      <div id="events-list" class="list"></div>
-    </section>
+          <div id="task-list" class="task-list"></div>
 
-    <!-- IDEAS -->
-    <section id="section-ideas" class="section hidden">
-      <div class="section-header">
-        <h2>Ideas de proyectos</h2>
-        <span id="idea-count" class="count-badge"></span>
-      </div>
-      <div class="input-row flex-wrap">
-        <input type="text" id="idea-name" placeholder="Nombre del proyecto..." style="flex:2;min-width:140px" onkeydown="if(event.key==='Enter')addIdea()">
-        <input type="text" id="idea-desc" placeholder="Descripción breve..." style="flex:3;min-width:160px">
-        <select id="idea-tag">
-          <option value="diseño">Diseño</option>
-          <option value="tech">Tech</option>
-          <option value="negocio">Negocio</option>
-          <option value="personal">Personal</option>
-          <option value="otro">Otro</option>
-        </select>
-        <button class="btn-primary" onclick="addIdea()">+ Idea</button>
-      </div>
-      <div class="ideas-grid" id="ideas-grid"></div>
-      <div class="export-row">
-        <button class="btn-secondary" onclick="exportJSON()"><i class="ti ti-download"></i> Exportar JSON</button>
-        <label class="btn-secondary"><i class="ti ti-upload"></i> Importar JSON<input type="file" accept=".json" onchange="importJSON(event)" style="display:none"></label>
-      </div>
-    </section>
+          <div class="empty-state" id="empty-state" hidden>
+            <i class="ti ti-checks"></i>
+            <p class="empty-title">All clear</p>
+            <p class="empty-sub">Press <kbd>N</kbd> to add a task</p>
+          </div>
+        </section>
 
-  </main>
+        <!-- CALENDAR -->
+        <section id="section-calendar" class="section hidden">
+          <div class="cal-header">
+            <button class="icon-btn" onclick="changeMonth(-1)"><i class="ti ti-chevron-left"></i></button>
+            <h2 id="cal-month-label"></h2>
+            <button class="icon-btn" onclick="changeMonth(1)"><i class="ti ti-chevron-right"></i></button>
+          </div>
+          <div class="cal-grid" id="cal-grid"></div>
+          <div class="event-add-area">
+            <p id="selected-day-label" class="selected-label">Seleccioná un día para agregar un evento</p>
+            <div class="input-row" id="event-input-row" style="display:none">
+              <input type="text" id="event-label" placeholder="Nombre del evento..." onkeydown="if(event.key==='Enter')addEvent()">
+              <button class="btn-primary" onclick="addEvent()">Marcar</button>
+            </div>
+          </div>
+          <div id="events-list" class="list"></div>
+        </section>
+
+        <!-- IDEAS -->
+        <section id="section-ideas" class="section hidden">
+          <div class="section-header">
+            <h2>Ideas</h2>
+            <span id="idea-count" class="count-badge"></span>
+          </div>
+          <div class="input-row flex-wrap">
+            <input type="text" id="idea-name" placeholder="Nombre del proyecto..." style="flex:2;min-width:140px" onkeydown="if(event.key==='Enter')addIdea()">
+            <input type="text" id="idea-desc" placeholder="Descripción breve..." style="flex:3;min-width:160px">
+            <select id="idea-tag">
+              <option value="diseño">Diseño</option>
+              <option value="tech">Tech</option>
+              <option value="negocio">Negocio</option>
+              <option value="personal">Personal</option>
+              <option value="otro">Otro</option>
+            </select>
+            <button class="btn-primary" onclick="addIdea()">+ Idea</button>
+          </div>
+          <div class="ideas-grid" id="ideas-grid"></div>
+          <div class="export-row">
+            <button class="btn-secondary" onclick="exportJSON()"><i class="ti ti-download"></i> Export JSON</button>
+            <label class="btn-secondary"><i class="ti ti-upload"></i> Import JSON<input type="file" accept=".json" onchange="importJSON(event)" style="display:none"></label>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
 </div>
 
-<script src="js/config.js?v=3"></script>
-<script src="js/auth.js?v=3"></script>
-<script src="js/db.js?v=3"></script>
-<script src="js/tasks.js?v=3"></script>
-<script src="js/calendar.js?v=3"></script>
-<script src="js/ideas.js?v=3"></script>
-<script src="js/app.js?v=3"></script>
+<script src="js/config.js?v=4"></script>
+<script src="js/auth.js?v=4"></script>
+<script src="js/db.js?v=4"></script>
+<script src="js/tasks.js?v=4"></script>
+<script src="js/calendar.js?v=4"></script>
+<script src="js/ideas.js?v=4"></script>
+<script src="js/app.js?v=4"></script>
 </body>
 </html>
