@@ -1,4 +1,6 @@
 // app.js — Sidebar navigation and app initialization
+let realtimeChannel = null;
+let navInitialized  = false;
 
 // ── Sidebar toggle ─────────────────────────────────────
 function toggleSidebar() {
@@ -101,11 +103,14 @@ async function initApp(uid) {
   userId = uid;
   setSyncStatus('syncing', 'Cargando...');
   await syncAll();
-  initNav();
+
+  // Wire nav only once — auth listener can fire multiple times
+  if (!navInitialized) { initNav(); navInitialized = true; }
   setView('inbox');
 
-  // Supabase realtime
-  sb.channel('realtime-' + uid)
+  // Remove previous channel before re-subscribing
+  if (realtimeChannel) { sb.removeChannel(realtimeChannel); realtimeChannel = null; }
+  realtimeChannel = sb.channel('realtime-' + uid)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks',  filter: 'user_id=eq.' + uid }, syncAll)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'events', filter: 'user_id=eq.' + uid }, syncAll)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'ideas',  filter: 'user_id=eq.' + uid }, syncAll)

@@ -54,7 +54,14 @@ async function dbUpdateTask(id, changes) {
   const tasks = LOCAL.get('tasks');
   const idx = tasks.findIndex(t => t.id === id);
   if (idx !== -1) { Object.assign(tasks[idx], changes); LOCAL.set('tasks', tasks); }
-  if (isOnline) await sb.from('tasks').update(changes).eq('id', id).eq('user_id', userId);
+  if (isOnline) {
+    // Strip fields not yet in Supabase schema; fail silently so local always works
+    const { due_date, notes, category, ...sbChanges } = changes;
+    if (Object.keys(sbChanges).length > 0) {
+      sb.from('tasks').update(sbChanges).eq('id', id).eq('user_id', userId)
+        .then(({ error }) => { if (error) console.warn('Supabase update:', error.message); });
+    }
+  }
 }
 
 async function dbDeleteTask(id) {
