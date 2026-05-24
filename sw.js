@@ -1,8 +1,10 @@
-const CACHE = 'mi-espacio-v4';
+const CACHE = 'mi-espacio-v5';
 const STATIC = [
   '/', '/index.html', '/css/app.css',
   '/js/config.js', '/js/auth.js', '/js/db.js',
-  '/js/tasks.js', '/js/calendar.js', '/js/ideas.js', '/js/app.js',
+  '/js/tasks.js', '/js/habits.js', '/js/goals.js',
+  '/js/dashboard.js', '/js/stats.js',
+  '/js/calendar.js', '/js/ideas.js', '/js/app.js',
   '/manifest.json', '/favicon.svg'
 ];
 

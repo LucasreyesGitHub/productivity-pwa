@@ -18,7 +18,7 @@
 </head>
 <body>
 
-<!-- AUTH SCREEN -->
+<!-- ══ AUTH SCREEN ══════════════════════════════════════ -->
 <div id="auth-screen" class="screen">
   <div class="auth-card">
     <div class="auth-logo"><i class="ti ti-checks"></i></div>
@@ -44,59 +44,73 @@
   </div>
 </div>
 
-<!-- APP SCREEN -->
+<!-- ══ APP SCREEN ═══════════════════════════════════════ -->
 <div id="app-screen" class="screen hidden">
   <div class="app-layout">
 
-    <!-- SIDEBAR -->
+    <!-- ── SIDEBAR ──────────────────────────────────── -->
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-hdr">
         <div class="brand-mark">
           <span class="brand-icon"><i class="ti ti-checks"></i></span>
           <span class="brand-name">Mi Espacio</span>
         </div>
-        <button class="sidebar-toggle-btn" id="sidebar-toggle" title="Collapse sidebar">
+        <button class="sidebar-toggle-btn" id="sidebar-toggle" title="Colapsar sidebar">
           <i class="ti ti-layout-sidebar-left-collapse"></i>
         </button>
       </div>
 
       <button class="sidebar-new" id="sidebar-new-task">
         <i class="ti ti-plus"></i>
-        <span>New Task</span>
+        <span>Nueva tarea</span>
         <kbd>N</kbd>
       </button>
 
       <nav class="sidebar-nav">
+        <!-- Dashboard -->
         <div class="nav-section">
-          <span class="nav-label">Smart Lists</span>
-          <button class="nav-item active" data-view="inbox">
+          <button class="nav-item active" data-section="dashboard">
+            <i class="ti ti-layout-dashboard"></i>
+            <span>Inicio</span>
+          </button>
+        </div>
+
+        <div class="nav-divider"></div>
+
+        <!-- Tasks -->
+        <div class="nav-section">
+          <span class="nav-label">Tareas</span>
+          <button class="nav-item" data-view="inbox">
             <i class="ti ti-inbox"></i>
-            <span>Inbox</span>
+            <span>Entrada</span>
             <span class="nav-badge" id="cnt-inbox"></span>
           </button>
           <button class="nav-item" data-view="today">
             <i class="ti ti-sun"></i>
-            <span>Today</span>
+            <span>Hoy</span>
             <span class="nav-badge" id="cnt-today"></span>
           </button>
           <button class="nav-item" data-view="upcoming">
             <i class="ti ti-calendar-event"></i>
-            <span>Upcoming</span>
+            <span>Próximas</span>
             <span class="nav-badge" id="cnt-upcoming"></span>
           </button>
           <button class="nav-item nav-item--alert" data-view="overdue">
             <i class="ti ti-clock-exclamation"></i>
-            <span>Overdue</span>
+            <span>Vencidas</span>
             <span class="nav-badge nav-badge--alert" id="cnt-overdue"></span>
           </button>
           <button class="nav-item" data-view="completed">
             <i class="ti ti-circle-check"></i>
-            <span>Completed</span>
+            <span>Completadas</span>
           </button>
         </div>
 
-        <div class="nav-section">
-          <span class="nav-label">Categories</span>
+        <div class="nav-divider"></div>
+
+        <!-- Categories (collapsed sub-section) -->
+        <div class="nav-section nav-section--cats">
+          <span class="nav-label">Categorías</span>
           <button class="nav-item" data-view="cat-trabajo">
             <span class="cat-dot cat-trabajo"></span>
             <span>Trabajo</span>
@@ -126,10 +140,59 @@
 
         <div class="nav-divider"></div>
 
+        <!-- Habits -->
         <div class="nav-section">
+          <span class="nav-label">Hábitos</span>
+          <button class="nav-item" data-section="habits">
+            <i class="ti ti-repeat"></i>
+            <span>Mis hábitos</span>
+            <span class="nav-badge" id="cnt-habits-today"></span>
+          </button>
+        </div>
+
+        <div class="nav-divider"></div>
+
+        <!-- Goals -->
+        <div class="nav-section">
+          <span class="nav-label">Objetivos</span>
+          <button class="nav-item" data-section="goals" data-goal-cat="all">
+            <i class="ti ti-target"></i>
+            <span>Todos</span>
+          </button>
+          <button class="nav-item" data-section="goals" data-goal-cat="finanzas">
+            <i class="ti ti-currency-dollar"></i>
+            <span>Finanzas</span>
+          </button>
+          <button class="nav-item" data-section="goals" data-goal-cat="salud">
+            <i class="ti ti-heart"></i>
+            <span>Salud</span>
+          </button>
+          <button class="nav-item" data-section="goals" data-goal-cat="estudio">
+            <i class="ti ti-book"></i>
+            <span>Estudio</span>
+          </button>
+          <button class="nav-item" data-section="goals" data-goal-cat="personal">
+            <i class="ti ti-user"></i>
+            <span>Personal</span>
+          </button>
+          <button class="nav-item" data-section="goals" data-goal-cat="carrera">
+            <i class="ti ti-briefcase"></i>
+            <span>Carrera</span>
+          </button>
+        </div>
+
+        <div class="nav-divider"></div>
+
+        <!-- Other sections -->
+        <div class="nav-section">
+          <span class="nav-label">Más</span>
+          <button class="nav-item" data-section="stats">
+            <i class="ti ti-chart-bar"></i>
+            <span>Estadísticas</span>
+          </button>
           <button class="nav-item" data-section="calendar">
             <i class="ti ti-calendar"></i>
-            <span>Calendar</span>
+            <span>Calendario</span>
           </button>
           <button class="nav-item" data-section="ideas">
             <i class="ti ti-bulb"></i>
@@ -139,43 +202,123 @@
       </nav>
 
       <div class="sidebar-foot">
-        <span class="sync-dot" id="sync-dot" title="Sync status"></span>
+        <span class="sync-dot" id="sync-dot" title="Estado de sincronización"></span>
         <span id="user-email-label" class="sidebar-user-email"></span>
-        <button class="icon-btn sidebar-logout" onclick="logout()" title="Sign out">
+        <button class="icon-btn sidebar-logout" onclick="logout()" title="Cerrar sesión">
           <i class="ti ti-logout"></i>
         </button>
       </div>
     </aside>
 
-    <!-- BACKDROP (mobile) -->
+    <!-- Backdrop (mobile) -->
     <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
 
-    <!-- MAIN -->
+    <!-- ── MAIN AREA ─────────────────────────────────── -->
     <div class="app-body">
       <header class="topbar">
-        <button class="icon-btn menu-btn" id="menu-btn" title="Open menu">
+        <button class="icon-btn menu-btn" id="menu-btn" title="Abrir menú">
           <i class="ti ti-menu-2"></i>
         </button>
-        <h1 class="page-title" id="page-title">Inbox</h1>
-        <!-- legacy sync element kept for db.js compatibility -->
+        <h1 class="page-title" id="page-title">Inicio</h1>
         <span id="sync-status" class="sync-badge" style="display:none"></span>
       </header>
 
       <main class="content">
 
-        <!-- TASKS -->
-        <section id="section-tasks" class="section">
+        <!-- ── DASHBOARD ─────────────────────────────── -->
+        <section id="section-dashboard" class="section">
+          <div class="dash-top">
+            <div class="dash-greeting-wrap">
+              <h2 class="dash-greeting" id="dash-greeting">Buenos días</h2>
+              <p class="dash-date" id="dash-date"></p>
+            </div>
+            <button class="btn-primary btn-sm" onclick="openQuickAdd()">
+              <i class="ti ti-plus"></i>
+              <span>Nueva tarea</span>
+            </button>
+          </div>
+
+          <div class="dash-stats">
+            <div class="stat-card">
+              <div class="stat-card-icon" style="color:var(--accent)"><i class="ti ti-checkbox"></i></div>
+              <div class="stat-card-body">
+                <span class="stat-val" id="dash-stat-tasks">0</span>
+                <span class="stat-lbl">Para hoy</span>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-card-icon" style="color:#e5484d"><i class="ti ti-clock-exclamation"></i></div>
+              <div class="stat-card-body">
+                <span class="stat-val" id="dash-stat-overdue">0</span>
+                <span class="stat-lbl">Vencidas</span>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-card-icon" style="color:#f76b15"><i class="ti ti-flame"></i></div>
+              <div class="stat-card-body">
+                <span class="stat-val" id="dash-stat-habits">—</span>
+                <span class="stat-lbl">Hábitos hoy</span>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-card-icon" style="color:#30a46c"><i class="ti ti-target"></i></div>
+              <div class="stat-card-body">
+                <span class="stat-val" id="dash-stat-goals">0</span>
+                <span class="stat-lbl">Objetivos activos</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="dash-body">
+            <div class="dash-col">
+              <div class="dash-widget">
+                <div class="dash-widget-hdr">
+                  <h3>Tareas para hoy</h3>
+                  <button class="btn-link" onclick="setView('today')">Ver todas</button>
+                </div>
+                <div id="dash-tasks-list" class="dash-task-list"></div>
+              </div>
+              <div class="dash-widget">
+                <div class="dash-widget-hdr">
+                  <h3>Hábitos de hoy</h3>
+                  <button class="btn-link" onclick="showSection('habits')">Ver todos</button>
+                </div>
+                <div id="dash-habits-strip" class="dash-habits-strip"></div>
+              </div>
+            </div>
+            <div class="dash-col dash-col--side">
+              <div class="dash-widget">
+                <div class="dash-widget-hdr">
+                  <h3>Mis objetivos</h3>
+                  <button class="btn-link" onclick="showSection('goals')">Ver todos</button>
+                </div>
+                <div id="dash-goals-list" class="dash-goals-mini"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── TASKS ──────────────────────────────────── -->
+        <section id="section-tasks" class="section hidden">
 
           <!-- Quick add panel -->
           <div class="quick-add" id="quick-add" hidden>
             <div class="qa-card">
               <div class="qa-input-wrap">
                 <i class="ti ti-circle-dashed qa-icon"></i>
-                <input id="qa-input" class="qa-input" placeholder="Task name…" autocomplete="off">
+                <input id="qa-input" class="qa-input" placeholder="Nombre de la tarea…" autocomplete="off">
               </div>
               <div class="qa-meta">
+                <div class="qa-type-toggle">
+                  <button class="qa-type-btn active" id="qa-type-persistent" onclick="setQaType('persistent')" type="button">
+                    <i class="ti ti-infinity"></i> Persistente
+                  </button>
+                  <button class="qa-type-btn" id="qa-type-daily" onclick="setQaType('daily')" type="button">
+                    <i class="ti ti-sun"></i> Hoy
+                  </button>
+                </div>
                 <select id="qa-cat" class="qa-select">
-                  <option value="">No category</option>
+                  <option value="">Sin categoría</option>
                   <option value="trabajo">Trabajo</option>
                   <option value="personal">Personal</option>
                   <option value="estudio">Estudio</option>
@@ -183,15 +326,15 @@
                   <option value="otro">Otro</option>
                 </select>
                 <select id="qa-priority" class="qa-select">
-                  <option value="med">Medium</option>
-                  <option value="high">High</option>
-                  <option value="low">Low</option>
+                  <option value="med">Media</option>
+                  <option value="high">Alta</option>
+                  <option value="low">Baja</option>
                 </select>
                 <input id="qa-date" type="date" class="qa-date">
               </div>
               <div class="qa-footer">
-                <button class="qa-cancel" id="qa-cancel">Cancel <kbd>Esc</kbd></button>
-                <button class="qa-submit" id="qa-submit">Add Task</button>
+                <button class="qa-cancel" id="qa-cancel">Cancelar <kbd>Esc</kbd></button>
+                <button class="qa-submit" id="qa-submit">Agregar tarea</button>
               </div>
             </div>
           </div>
@@ -200,12 +343,61 @@
 
           <div class="empty-state" id="empty-state" hidden>
             <i class="ti ti-checks"></i>
-            <p class="empty-title">All clear</p>
-            <p class="empty-sub">Press <kbd>N</kbd> to add a task</p>
+            <p class="empty-title">Todo al día</p>
+            <p class="empty-sub">Presioná <kbd>N</kbd> para agregar una tarea</p>
           </div>
         </section>
 
-        <!-- CALENDAR -->
+        <!-- ── HABITS ─────────────────────────────────── -->
+        <section id="section-habits" class="section hidden">
+          <div class="section-header">
+            <div>
+              <h2>Mis Hábitos</h2>
+              <p class="section-sub">Construí rutinas que duran</p>
+            </div>
+            <button class="btn-primary" id="add-habit-btn">
+              <i class="ti ti-plus"></i>
+              Nuevo hábito
+            </button>
+          </div>
+          <div id="habits-list" class="habits-list"></div>
+        </section>
+
+        <!-- ── GOALS ──────────────────────────────────── -->
+        <section id="section-goals" class="section hidden">
+          <div class="section-header">
+            <div>
+              <h2>Objetivos</h2>
+              <p class="section-sub">Seguí tu progreso hacia tus metas</p>
+            </div>
+            <button class="btn-primary" id="add-goal-btn">
+              <i class="ti ti-plus"></i>
+              Nuevo objetivo
+            </button>
+          </div>
+          <div class="goal-filters">
+            <button class="goal-filter-tab active" data-cat="all" onclick="setGoalCategory('all')">Todos</button>
+            <button class="goal-filter-tab" data-cat="finanzas" onclick="setGoalCategory('finanzas')">💰 Finanzas</button>
+            <button class="goal-filter-tab" data-cat="salud" onclick="setGoalCategory('salud')">❤️ Salud</button>
+            <button class="goal-filter-tab" data-cat="estudio" onclick="setGoalCategory('estudio')">📚 Estudio</button>
+            <button class="goal-filter-tab" data-cat="personal" onclick="setGoalCategory('personal')">🧩 Personal</button>
+            <button class="goal-filter-tab" data-cat="carrera" onclick="setGoalCategory('carrera')">💼 Carrera</button>
+          </div>
+          <div id="goals-grid" class="goals-grid"></div>
+        </section>
+
+        <!-- ── STATS ──────────────────────────────────── -->
+        <section id="section-stats" class="section hidden">
+          <div class="section-header">
+            <div>
+              <h2>Estadísticas</h2>
+              <p class="section-sub">Tu productividad en detalle</p>
+            </div>
+          </div>
+          <div id="stats-content" class="stats-content"></div>
+        </section>
+
+        <!-- ── CALENDAR ───────────────────────────────── -->
         <section id="section-calendar" class="section hidden">
           <div class="cal-header">
             <button class="icon-btn" onclick="changeMonth(-1)"><i class="ti ti-chevron-left"></i></button>
@@ -216,22 +408,25 @@
           <div class="event-add-area">
             <p id="selected-day-label" class="selected-label">Seleccioná un día para agregar un evento</p>
             <div class="input-row" id="event-input-row" style="display:none">
-              <input type="text" id="event-label" placeholder="Nombre del evento..." onkeydown="if(event.key==='Enter')addEvent()">
+              <input type="text" id="event-label" placeholder="Nombre del evento..."
+                onkeydown="if(event.key==='Enter')addEvent()">
               <button class="btn-primary" onclick="addEvent()">Marcar</button>
             </div>
           </div>
           <div id="events-list" class="list"></div>
         </section>
 
-        <!-- IDEAS -->
+        <!-- ── IDEAS ─────────────────────────────────── -->
         <section id="section-ideas" class="section hidden">
           <div class="section-header">
             <h2>Ideas</h2>
             <span id="idea-count" class="count-badge"></span>
           </div>
           <div class="input-row flex-wrap">
-            <input type="text" id="idea-name" placeholder="Nombre del proyecto..." style="flex:2;min-width:140px" onkeydown="if(event.key==='Enter')addIdea()">
-            <input type="text" id="idea-desc" placeholder="Descripción breve..." style="flex:3;min-width:160px">
+            <input type="text" id="idea-name" placeholder="Nombre del proyecto..."
+              style="flex:2;min-width:140px" onkeydown="if(event.key==='Enter')addIdea()">
+            <input type="text" id="idea-desc" placeholder="Descripción breve..."
+              style="flex:3;min-width:160px">
             <select id="idea-tag">
               <option value="diseño">Diseño</option>
               <option value="tech">Tech</option>
@@ -243,22 +438,135 @@
           </div>
           <div class="ideas-grid" id="ideas-grid"></div>
           <div class="export-row">
-            <button class="btn-secondary" onclick="exportJSON()"><i class="ti ti-download"></i> Export JSON</button>
-            <label class="btn-secondary"><i class="ti ti-upload"></i> Import JSON<input type="file" accept=".json" onchange="importJSON(event)" style="display:none"></label>
+            <button class="btn-secondary" onclick="exportJSON()">
+              <i class="ti ti-download"></i> Exportar JSON
+            </button>
+            <label class="btn-secondary">
+              <i class="ti ti-upload"></i> Importar JSON
+              <input type="file" accept=".json" onchange="importJSON(event)" style="display:none">
+            </label>
           </div>
         </section>
 
       </main>
-    </div>
-  </div>
-</div>
+    </div><!-- app-body -->
+  </div><!-- app-layout -->
+</div><!-- app-screen -->
 
-<script src="js/config.js?v=4"></script>
-<script src="js/auth.js?v=4"></script>
-<script src="js/db.js?v=4"></script>
-<script src="js/tasks.js?v=4"></script>
-<script src="js/calendar.js?v=4"></script>
-<script src="js/ideas.js?v=4"></script>
-<script src="js/app.js?v=4"></script>
+<!-- ══ MODALS ════════════════════════════════════════════ -->
+<div id="modal-backdrop" class="modal-backdrop hidden" onclick="handleBackdropClick(event)">
+
+  <!-- Habit modal -->
+  <div id="modal-habit-form" class="modal-card hidden" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3 id="habit-modal-title">Nuevo hábito</h3>
+      <button class="icon-btn" onclick="closeModal('modal-habit-form')" aria-label="Cerrar">
+        <i class="ti ti-x"></i>
+      </button>
+    </div>
+    <form id="habit-form" onsubmit="event.preventDefault();submitHabitForm()">
+      <div class="form-group">
+        <label for="habit-title">Nombre del hábito</label>
+        <input type="text" id="habit-title" placeholder="Ej: Meditar 10 minutos" required autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label for="habit-frequency">Frecuencia</label>
+        <select id="habit-frequency">
+          <option value="daily">Diario</option>
+          <option value="weekly">Semanal</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Color</label>
+        <div class="color-options" id="habit-color-options">
+          <button type="button" class="color-opt active" data-color="#5b5bd6" style="background:#5b5bd6" onclick="selectHabitColor('#5b5bd6',this)"></button>
+          <button type="button" class="color-opt" data-color="#30a46c" style="background:#30a46c" onclick="selectHabitColor('#30a46c',this)"></button>
+          <button type="button" class="color-opt" data-color="#e5484d" style="background:#e5484d" onclick="selectHabitColor('#e5484d',this)"></button>
+          <button type="button" class="color-opt" data-color="#f76b15" style="background:#f76b15" onclick="selectHabitColor('#f76b15',this)"></button>
+          <button type="button" class="color-opt" data-color="#0091ff" style="background:#0091ff" onclick="selectHabitColor('#0091ff',this)"></button>
+          <button type="button" class="color-opt" data-color="#8e4ec6" style="background:#8e4ec6" onclick="selectHabitColor('#8e4ec6',this)"></button>
+          <button type="button" class="color-opt" data-color="#ab6400" style="background:#ab6400" onclick="selectHabitColor('#ab6400',this)"></button>
+          <button type="button" class="color-opt" data-color="#6e6e73" style="background:#6e6e73" onclick="selectHabitColor('#6e6e73',this)"></button>
+        </div>
+        <input type="hidden" id="habit-color" value="#5b5bd6">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="closeModal('modal-habit-form')">Cancelar</button>
+        <button type="submit" class="btn-primary">Guardar hábito</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Goal modal -->
+  <div id="modal-goal-form" class="modal-card hidden" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3 id="goal-modal-title">Nuevo objetivo</h3>
+      <button class="icon-btn" onclick="closeModal('modal-goal-form')" aria-label="Cerrar">
+        <i class="ti ti-x"></i>
+      </button>
+    </div>
+    <form id="goal-form" onsubmit="event.preventDefault();submitGoalForm()">
+      <div class="form-group">
+        <label for="goal-title">Título del objetivo</label>
+        <input type="text" id="goal-title" placeholder="Ej: Ahorrar $10.000" required autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label for="goal-category">Categoría</label>
+        <select id="goal-category">
+          <option value="finanzas">💰 Finanzas</option>
+          <option value="salud">❤️ Salud</option>
+          <option value="estudio">📚 Estudio</option>
+          <option value="personal">🧩 Personal</option>
+          <option value="carrera">💼 Carrera</option>
+          <option value="negocios">🏢 Negocios</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="goal-description">Descripción <span class="optional">opcional</span></label>
+        <textarea id="goal-description" placeholder="Describí este objetivo..." rows="2"></textarea>
+      </div>
+      <div class="form-group">
+        <label for="goal-why">¿Por qué es importante? <span class="optional">opcional</span></label>
+        <textarea id="goal-why" placeholder="Tu motivación personal..." rows="2"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="goal-target">Valor objetivo</label>
+          <input type="number" id="goal-target" placeholder="100" min="0" step="any">
+        </div>
+        <div class="form-group">
+          <label for="goal-current">Valor actual</label>
+          <input type="number" id="goal-current" placeholder="0" min="0" step="any">
+        </div>
+        <div class="form-group">
+          <label for="goal-unit">Unidad</label>
+          <input type="text" id="goal-unit" placeholder="%" maxlength="12">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="goal-deadline">Fecha límite <span class="optional">opcional</span></label>
+        <input type="date" id="goal-deadline">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="closeModal('modal-goal-form')">Cancelar</button>
+        <button type="submit" class="btn-primary">Guardar objetivo</button>
+      </div>
+    </form>
+  </div>
+
+</div><!-- modal-backdrop -->
+
+<!-- ══ SCRIPTS ═══════════════════════════════════════════ -->
+<script src="js/config.js?v=5"></script>
+<script src="js/auth.js?v=5"></script>
+<script src="js/db.js?v=5"></script>
+<script src="js/tasks.js?v=5"></script>
+<script src="js/habits.js?v=5"></script>
+<script src="js/goals.js?v=5"></script>
+<script src="js/dashboard.js?v=5"></script>
+<script src="js/stats.js?v=5"></script>
+<script src="js/calendar.js?v=5"></script>
+<script src="js/ideas.js?v=5"></script>
+<script src="js/app.js?v=5"></script>
 </body>
 </html>
