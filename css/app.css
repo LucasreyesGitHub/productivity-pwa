@@ -1659,8 +1659,7 @@ input::placeholder { color: var(--text-3); }
   font-size: 13px; font-weight: 600; color: #f76b15;
 }
 .habit-streak i { font-size: 14px; }
-.habit-menu { display: flex; gap: 2px; opacity: 0; transition: opacity 0.14s; }
-.habit-card:hover .habit-menu { opacity: 1; }
+.habit-menu { display: flex; gap: 2px; }
 
 .habit-history {
   display: flex;

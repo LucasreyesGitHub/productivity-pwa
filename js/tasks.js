@@ -85,6 +85,12 @@ function setQaType(type) {
 }
 
 function openQuickAdd() {
+  // If the tasks section is hidden (e.g. called from dashboard), navigate there first
+  const tasksSection = document.getElementById('section-tasks');
+  if (tasksSection && tasksSection.classList.contains('hidden')) {
+    setView(currentView || 'inbox');
+  }
+
   const qa = document.getElementById('quick-add');
   if (!qa.hidden) { document.getElementById('qa-input').focus(); return; }
   qa.hidden = false;
