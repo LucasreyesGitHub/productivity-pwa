@@ -18,6 +18,19 @@
 </head>
 <body>
 
+<!-- ══ SET PASSWORD SCREEN (password recovery) ══════════ -->
+<div id="set-password-screen" class="screen hidden">
+  <div class="auth-card">
+    <div class="auth-logo"><i class="ti ti-lock-open"></i></div>
+    <h1>Nueva contraseña</h1>
+    <p class="auth-sub">Ingresá tu contraseña nueva</p>
+    <div id="set-pass-error" class="auth-error hidden"></div>
+    <input type="password" id="new-pass" placeholder="Nueva contraseña (mín. 8 caracteres)" autocomplete="new-password">
+    <input type="password" id="new-pass2" placeholder="Confirmar contraseña" autocomplete="new-password">
+    <button class="btn-primary" onclick="saveNewPassword()">Guardar contraseña</button>
+  </div>
+</div>
+
 <!-- ══ AUTH SCREEN ══════════════════════════════════════ -->
 <div id="auth-screen" class="screen">
   <div class="auth-card">

@@ -54,14 +54,35 @@ async function logout() {
   await sb.auth.signOut();
 }
 
+async function saveNewPassword() {
+  const pass  = document.getElementById('new-pass').value;
+  const pass2 = document.getElementById('new-pass2').value;
+  const errEl = document.getElementById('set-pass-error');
+  errEl.classList.add('hidden');
+  if (pass.length < 8) { errEl.textContent = 'La contraseña debe tener al menos 8 caracteres.'; errEl.classList.remove('hidden'); return; }
+  if (pass !== pass2)  { errEl.textContent = 'Las contraseñas no coinciden.'; errEl.classList.remove('hidden'); return; }
+  const { error } = await sb.auth.updateUser({ password: pass });
+  if (error) { errEl.textContent = error.message; errEl.classList.remove('hidden'); return; }
+  document.getElementById('set-password-screen').classList.add('hidden');
+  document.getElementById('app-screen').classList.remove('hidden');
+}
+
 sb.auth.onAuthStateChange((event, session) => {
+  if (event === 'PASSWORD_RECOVERY') {
+    document.getElementById('auth-screen').classList.add('hidden');
+    document.getElementById('app-screen').classList.add('hidden');
+    document.getElementById('set-password-screen').classList.remove('hidden');
+    return;
+  }
   if (session) {
     document.getElementById('auth-screen').classList.add('hidden');
+    document.getElementById('set-password-screen').classList.add('hidden');
     document.getElementById('app-screen').classList.remove('hidden');
     document.getElementById('user-email-label').textContent = session.user.email;
     initApp(session.user.id);
   } else {
     document.getElementById('auth-screen').classList.remove('hidden');
+    document.getElementById('set-password-screen').classList.add('hidden');
     document.getElementById('app-screen').classList.add('hidden');
   }
 });
