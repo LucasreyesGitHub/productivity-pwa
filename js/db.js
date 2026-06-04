@@ -55,8 +55,9 @@ async function dbUpdateTask(id, changes) {
   const idx = tasks.findIndex(t => t.id === id);
   if (idx !== -1) { Object.assign(tasks[idx], changes); LOCAL.set('tasks', tasks); }
   if (isOnline) {
-    // Strip fields not yet in Supabase schema; fail silently so local always works
-    const { due_date, notes, category, ...sbChanges } = changes;
+    // Bug #2 fix: include category (it IS in the Supabase schema — sent on insert too)
+    // Still strip due_date and notes until schema columns are added via migration
+    const { due_date, notes, ...sbChanges } = changes;
     if (Object.keys(sbChanges).length > 0) {
       sb.from('tasks').update(sbChanges).eq('id', id).eq('user_id', userId)
         .then(({ error }) => { if (error) console.warn('Supabase update:', error.message); });

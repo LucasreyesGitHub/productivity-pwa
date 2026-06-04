@@ -17,7 +17,8 @@ function getHabitStreak(habitId) {
   if (!dates.includes(todayStr())) return 0;
   let streak = 0;
   const d = new Date(todayStr() + 'T12:00:00');
-  while (true) {
+  const MAX_STREAK = 365; // Bug #4 fix: prevent infinite loop
+  while (streak < MAX_STREAK) {
     const ds = d.toISOString().split('T')[0];
     if (dates.includes(ds)) { streak++; d.setDate(d.getDate() - 1); }
     else break;

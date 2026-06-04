@@ -38,21 +38,21 @@
     <h1>Mi Espacio</h1>
     <p class="auth-sub">Tu workspace personal</p>
     <div class="tabs">
-      <button class="tab active" onclick="showTab('login')">Iniciar sesión</button>
-      <button class="tab" onclick="showTab('register')">Registrarse</button>
+      <button class="tab active" onclick="showTab('login', this)">Iniciar sesión</button>
+      <button class="tab" onclick="showTab('register', this)">Registrarse</button>
     </div>
     <div id="auth-error" class="auth-error hidden"></div>
     <div id="tab-login">
       <input type="email" id="login-email" placeholder="Email" autocomplete="email">
       <input type="password" id="login-pass" placeholder="Contraseña" autocomplete="current-password">
-      <button class="btn-primary" onclick="login()">Entrar</button>
+      <button class="btn-primary" id="login-btn" onclick="login()">Entrar</button>
       <button class="btn-forgot" onclick="forgotPassword()">Olvidé mi contraseña</button>
     </div>
     <div id="tab-register" class="hidden">
       <input type="email" id="reg-email" placeholder="Email" autocomplete="email">
       <input type="password" id="reg-pass" placeholder="Contraseña (mín. 8 caracteres)" autocomplete="new-password">
       <input type="password" id="reg-pass2" placeholder="Confirmar contraseña" autocomplete="new-password">
-      <button class="btn-primary" onclick="register()">Crear cuenta</button>
+      <button class="btn-primary" id="register-btn" onclick="register()">Crear cuenta</button>
     </div>
   </div>
 </div>
@@ -412,21 +412,47 @@
 
         <!-- ── CALENDAR ───────────────────────────────── -->
         <section id="section-calendar" class="section hidden">
-          <div class="cal-header">
-            <button class="icon-btn" onclick="changeMonth(-1)"><i class="ti ti-chevron-left"></i></button>
-            <h2 id="cal-month-label"></h2>
-            <button class="icon-btn" onclick="changeMonth(1)"><i class="ti ti-chevron-right"></i></button>
-          </div>
-          <div class="cal-grid" id="cal-grid"></div>
-          <div class="event-add-area">
-            <p id="selected-day-label" class="selected-label">Seleccioná un día para agregar un evento</p>
-            <div class="input-row" id="event-input-row" style="display:none">
-              <input type="text" id="event-label" placeholder="Nombre del evento..."
-                onkeydown="if(event.key==='Enter')addEvent()">
-              <button class="btn-primary" onclick="addEvent()">Marcar</button>
+          <div class="cal-layout">
+
+            <!-- Left: grid + day panel + events list -->
+            <div class="cal-main">
+              <div class="cal-header">
+                <button class="icon-btn" onclick="changeMonth(-1)" aria-label="Mes anterior">
+                  <i class="ti ti-chevron-left"></i>
+                </button>
+                <h2 id="cal-month-label"></h2>
+                <button class="icon-btn" onclick="changeMonth(1)" aria-label="Mes siguiente">
+                  <i class="ti ti-chevron-right"></i>
+                </button>
+              </div>
+
+              <div class="cal-grid" id="cal-grid"></div>
+
+              <!-- Day detail panel -->
+              <div id="day-panel" class="day-panel hidden"></div>
+
+              <!-- Hidden input used by addEvent() -->
+              <input type="hidden" id="event-label" />
+
+              <!-- Full events list -->
+              <div class="cal-events-section">
+                <h3 class="cal-section-title">
+                  <i class="ti ti-calendar-event"></i> Todos los eventos
+                </h3>
+                <div id="events-list" class="list"></div>
+              </div>
             </div>
+
+            <!-- Right: upcoming tasks sidebar -->
+            <aside class="cal-sidebar">
+              <div class="cal-sidebar-hdr">
+                <span><i class="ti ti-list-check"></i> Tareas del mes</span>
+                <button class="btn-link" onclick="openQuickAdd()">+ Nueva</button>
+              </div>
+              <div id="cal-tasks-sidebar" class="cal-tasks-sidebar"></div>
+            </aside>
+
           </div>
-          <div id="events-list" class="list"></div>
         </section>
 
         <!-- ── IDEAS ─────────────────────────────────── -->
@@ -571,7 +597,8 @@
 
 <!-- ══ TASK DETAIL MODAL ════════════════════════════════ -->
 <div id="task-detail-overlay" class="task-detail-overlay" hidden
-     onclick="handleTaskDetailOverlayClick(event)">
+     onclick="handleTaskDetailOverlayClick(event)"
+     role="dialog" aria-modal="true" aria-labelledby="td-title">
   <div class="task-detail-card" onclick="event.stopPropagation()">
 
     <!-- Header -->
@@ -638,16 +665,16 @@
 </div>
 
 <!-- ══ SCRIPTS ═══════════════════════════════════════════ -->
-<script src="js/config.js?v=6"></script>
-<script src="js/auth.js?v=6"></script>
-<script src="js/db.js?v=6"></script>
-<script src="js/tasks.js?v=6"></script>
-<script src="js/habits.js?v=6"></script>
-<script src="js/goals.js?v=6"></script>
-<script src="js/dashboard.js?v=6"></script>
-<script src="js/stats.js?v=6"></script>
-<script src="js/calendar.js?v=6"></script>
-<script src="js/ideas.js?v=6"></script>
-<script src="js/app.js?v=6"></script>
+<script src="js/config.js?v=7"></script>
+<script src="js/auth.js?v=7"></script>
+<script src="js/db.js?v=7"></script>
+<script src="js/tasks.js?v=7"></script>
+<script src="js/habits.js?v=7"></script>
+<script src="js/goals.js?v=7"></script>
+<script src="js/dashboard.js?v=7"></script>
+<script src="js/stats.js?v=7"></script>
+<script src="js/calendar.js?v=7"></script>
+<script src="js/ideas.js?v=7"></script>
+<script src="js/app.js?v=7"></script>
 </body>
 </html>

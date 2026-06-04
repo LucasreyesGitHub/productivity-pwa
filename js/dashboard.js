@@ -10,18 +10,15 @@ function renderDashboard() {
 
   // ── Data aggregation ──────────────────────────────
   const overdueTasks = tasks.filter(t => !t.done && t.due_date && t.due_date < today);
+  // Bug #10 fix: extract priority fn outside sort to avoid re-allocation per comparison
+  const getPriority = t => {
+    if (t.due_date && t.due_date < today) return 0;
+    if (t.due_date === today || t.task_type === 'daily') return 1;
+    if (t.due_date) return 2;
+    return 3;
+  };
   // Show all pending tasks, sorted by urgency: overdue → today/daily → upcoming → no date
-  const allForToday = tasks
-    .filter(t => !t.done)
-    .sort((a, b) => {
-      const rank = t => {
-        if (t.due_date && t.due_date < today) return 0;
-        if (t.due_date === today || t.task_type === 'daily') return 1;
-        if (t.due_date) return 2;
-        return 3;
-      };
-      return rank(a) - rank(b);
-    });
+  const allForToday = tasks.filter(t => !t.done).sort((a, b) => getPriority(a) - getPriority(b));
 
   const dailyHabits = habits.filter(h => h.frequency === 'daily');
   const doneHabits  = dailyHabits.filter(h => completions.some(c => c.habit_id === h.id && c.date === today));

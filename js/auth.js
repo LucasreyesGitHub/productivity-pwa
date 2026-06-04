@@ -1,27 +1,54 @@
-function showTab(tab) {
+// auth.js — Authentication: login, register, password recovery
+
+// ── Tab switching ──────────────────────────────────────
+function showTab(tab, el) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.getElementById('tab-login').classList.add('hidden');
   document.getElementById('tab-register').classList.add('hidden');
   document.getElementById('tab-' + tab).classList.remove('hidden');
-  event.target.classList.add('active');
-  clearAuthError();
+  // Use passed element reference instead of implicit window.event (Firefox fix)
+  el?.classList.add('active');
+  clearAuthMsg();
 }
 
+// ── Auth message display ───────────────────────────────
 function showAuthError(msg) {
   const el = document.getElementById('auth-error');
   el.textContent = msg;
+  el.className = 'auth-error auth-error--error';
   el.classList.remove('hidden');
 }
 
-function clearAuthError() {
-  document.getElementById('auth-error').classList.add('hidden');
+function showAuthSuccess(msg) {
+  const el = document.getElementById('auth-error');
+  el.textContent = msg;
+  el.className = 'auth-error auth-error--success';
+  el.classList.remove('hidden');
 }
 
+function clearAuthMsg() {
+  const el = document.getElementById('auth-error');
+  el.classList.add('hidden');
+  el.className = 'auth-error hidden';
+}
+
+// ── Loading state helpers ──────────────────────────────
+function setAuthLoading(btnId, loading) {
+  const btn = document.getElementById(btnId);
+  if (!btn) return;
+  btn.disabled = loading;
+  btn.dataset.originalText = btn.dataset.originalText || btn.textContent;
+  btn.textContent = loading ? 'Cargando...' : btn.dataset.originalText;
+}
+
+// ── Auth actions ───────────────────────────────────────
 async function login() {
   const email = document.getElementById('login-email').value.trim();
   const pass  = document.getElementById('login-pass').value;
   if (!email || !pass) return showAuthError('Completá todos los campos.');
+  setAuthLoading('login-btn', true);
   const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+  setAuthLoading('login-btn', false);
   if (error) showAuthError(error.message);
 }
 
@@ -32,12 +59,14 @@ async function register() {
   if (!email || !pass || !pass2) return showAuthError('Completá todos los campos.');
   if (pass.length < 8) return showAuthError('La contraseña debe tener al menos 8 caracteres.');
   if (pass !== pass2) return showAuthError('Las contraseñas no coinciden.');
+  setAuthLoading('register-btn', true);
   const { error } = await sb.auth.signUp({
     email, password: pass,
     options: { emailRedirectTo: 'https://productivity-pwa.vercel.app' }
   });
+  setAuthLoading('register-btn', false);
   if (error) showAuthError(error.message);
-  else showAuthError('¡Cuenta creada! Revisá tu email para confirmar.');
+  else showAuthSuccess('¡Cuenta creada! Revisá tu email para confirmar.');
 }
 
 async function forgotPassword() {
@@ -47,7 +76,7 @@ async function forgotPassword() {
     redirectTo: 'https://productivity-pwa.vercel.app',
   });
   if (error) showAuthError(error.message);
-  else showAuthError('✓ Te enviamos un email para resetear la contraseña.');
+  else showAuthSuccess('✓ Te enviamos un email para resetear la contraseña.');
 }
 
 async function logout() {
@@ -67,6 +96,7 @@ async function saveNewPassword() {
   document.getElementById('app-screen').classList.remove('hidden');
 }
 
+// ── Auth state listener ────────────────────────────────
 sb.auth.onAuthStateChange((event, session) => {
   if (event === 'PASSWORD_RECOVERY') {
     document.getElementById('auth-screen').classList.add('hidden');
