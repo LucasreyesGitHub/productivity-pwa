@@ -299,6 +299,42 @@ async function dbDeleteMilestone(id) {
   if (isOnline) sb.from('milestones').delete().eq('id', id).eq('user_id', userId).catch(() => {});
 }
 
+// ── SUBTASKS (local-only storage) ──────────────────────
+function dbGetSubtasks(taskId) {
+  return LOCAL.get('subtasks').filter(s => s.task_id === taskId);
+}
+
+function dbAddSubtask(taskId, text) {
+  const item = {
+    id: crypto.randomUUID(),
+    task_id: taskId,
+    text,
+    done: false,
+    user_id: userId,
+    created_at: new Date().toISOString(),
+  };
+  const subtasks = LOCAL.get('subtasks');
+  subtasks.push(item);
+  LOCAL.set('subtasks', subtasks);
+  return item;
+}
+
+function dbToggleSubtask(subtaskId) {
+  const subtasks = LOCAL.get('subtasks');
+  const s = subtasks.find(s => s.id === subtaskId);
+  if (s) s.done = !s.done;
+  LOCAL.set('subtasks', subtasks);
+  return s;
+}
+
+function dbDeleteSubtask(subtaskId) {
+  LOCAL.set('subtasks', LOCAL.get('subtasks').filter(s => s.id !== subtaskId));
+}
+
+function dbDeleteSubtasksForTask(taskId) {
+  LOCAL.set('subtasks', LOCAL.get('subtasks').filter(s => s.task_id !== taskId));
+}
+
 // ── FULL SYNC ──────────────────────────────────────────
 async function syncAll() {
   if (!userId || !isOnline) return;

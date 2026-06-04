@@ -286,8 +286,8 @@
             <div class="dash-col">
               <div class="dash-widget">
                 <div class="dash-widget-hdr">
-                  <h3>Tareas para hoy</h3>
-                  <button class="btn-link" onclick="setView('today')">Ver todas</button>
+                  <h3>Tareas pendientes</h3>
+                  <button class="btn-link" onclick="setView('inbox')">Ver todas</button>
                 </div>
                 <div id="dash-tasks-list" class="dash-task-list"></div>
               </div>
@@ -569,17 +569,85 @@
 
 </div><!-- modal-backdrop -->
 
+<!-- ══ TASK DETAIL MODAL ════════════════════════════════ -->
+<div id="task-detail-overlay" class="task-detail-overlay" hidden
+     onclick="handleTaskDetailOverlayClick(event)">
+  <div class="task-detail-card" onclick="event.stopPropagation()">
+
+    <!-- Header -->
+    <div class="td-header">
+      <button id="td-check" class="task-check" onclick="toggleTaskFromModal()" aria-label="Completar tarea"></button>
+      <input id="td-title" class="td-title" placeholder="Nombre de la tarea" autocomplete="off" />
+      <button class="td-close" onclick="saveTaskDetail().then(closeTaskDetail)" aria-label="Cerrar">
+        <i class="ti ti-x"></i>
+      </button>
+    </div>
+
+    <!-- Meta: priority, category, due date -->
+    <div class="td-meta">
+      <select id="td-priority" class="td-select">
+        <option value="high">🔴 Alta</option>
+        <option value="med">🟡 Media</option>
+        <option value="low">🟢 Baja</option>
+      </select>
+      <select id="td-category" class="td-select">
+        <option value="">Sin categoría</option>
+        <option value="trabajo">Trabajo</option>
+        <option value="personal">Personal</option>
+        <option value="estudio">Estudio</option>
+        <option value="salud">Salud</option>
+        <option value="otro">Otro</option>
+      </select>
+      <input id="td-due" type="date" class="td-select" title="Fecha límite" />
+    </div>
+
+    <!-- Notes -->
+    <div class="td-notes-wrap">
+      <textarea id="td-notes" class="td-notes" placeholder="Notas o descripción…" rows="3"></textarea>
+    </div>
+
+    <!-- Subtasks -->
+    <div class="td-subtasks">
+      <div class="td-subtasks-hdr">
+        <span class="td-subtasks-label"><i class="ti ti-list-check"></i> Subtareas</span>
+        <span id="td-subtasks-pct" class="td-subtasks-pct"></span>
+      </div>
+      <div id="td-subtasks-list" class="td-subtasks-list"></div>
+      <div class="td-add-subtask">
+        <button class="subtask-add-dot" tabindex="-1"></button>
+        <input id="td-subtask-input" class="td-subtask-input"
+               placeholder="Nueva subtarea… (Enter para agregar)"
+               autocomplete="off" />
+        <button class="subtask-send-btn" onclick="addSubtaskFromInput()" aria-label="Agregar subtarea">
+          <i class="ti ti-corner-down-left"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="td-footer">
+      <button class="td-delete-btn" onclick="deleteTaskFromModal()">
+        <i class="ti ti-trash"></i> Eliminar tarea
+      </button>
+      <button class="btn-primary" onclick="saveTaskDetail().then(closeTaskDetail)">
+        Guardar
+      </button>
+    </div>
+
+  </div>
+</div>
+
 <!-- ══ SCRIPTS ═══════════════════════════════════════════ -->
-<script src="js/config.js?v=5"></script>
-<script src="js/auth.js?v=5"></script>
-<script src="js/db.js?v=5"></script>
-<script src="js/tasks.js?v=5"></script>
-<script src="js/habits.js?v=5"></script>
-<script src="js/goals.js?v=5"></script>
-<script src="js/dashboard.js?v=5"></script>
-<script src="js/stats.js?v=5"></script>
-<script src="js/calendar.js?v=5"></script>
-<script src="js/ideas.js?v=5"></script>
-<script src="js/app.js?v=5"></script>
+<script src="js/config.js?v=6"></script>
+<script src="js/auth.js?v=6"></script>
+<script src="js/db.js?v=6"></script>
+<script src="js/tasks.js?v=6"></script>
+<script src="js/habits.js?v=6"></script>
+<script src="js/goals.js?v=6"></script>
+<script src="js/dashboard.js?v=6"></script>
+<script src="js/stats.js?v=6"></script>
+<script src="js/calendar.js?v=6"></script>
+<script src="js/ideas.js?v=6"></script>
+<script src="js/app.js?v=6"></script>
 </body>
 </html>

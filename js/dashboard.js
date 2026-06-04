@@ -9,10 +9,19 @@ function renderDashboard() {
   const goals       = LOCAL.get('goals');
 
   // ── Data aggregation ──────────────────────────────
-  const todayTasks   = tasks.filter(t => !t.done && t.due_date === today);
-  const dailyTasks   = tasks.filter(t => !t.done && t.task_type === 'daily' && !todayTasks.some(tt => tt.id === t.id));
   const overdueTasks = tasks.filter(t => !t.done && t.due_date && t.due_date < today);
-  const allForToday  = [...dailyTasks, ...todayTasks];
+  // Show all pending tasks, sorted by urgency: overdue → today/daily → upcoming → no date
+  const allForToday = tasks
+    .filter(t => !t.done)
+    .sort((a, b) => {
+      const rank = t => {
+        if (t.due_date && t.due_date < today) return 0;
+        if (t.due_date === today || t.task_type === 'daily') return 1;
+        if (t.due_date) return 2;
+        return 3;
+      };
+      return rank(a) - rank(b);
+    });
 
   const dailyHabits = habits.filter(h => h.frequency === 'daily');
   const doneHabits  = dailyHabits.filter(h => completions.some(c => c.habit_id === h.id && c.date === today));
@@ -30,7 +39,7 @@ function renderDashboard() {
 
   // ── Stat cards ────────────────────────────────────
   const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-  setVal('dash-stat-tasks',   allForToday.length);
+  setVal('dash-stat-tasks',   tasks.filter(t => !t.done).length);
   setVal('dash-stat-overdue', overdueTasks.length);
   setVal('dash-stat-habits',  dailyHabits.length ? `${doneHabits.length}/${dailyHabits.length}` : '—');
   setVal('dash-stat-goals',   activeGoals.length);
@@ -64,28 +73,42 @@ function renderDashboardTasks(tasks) {
 
   const catLabels = { trabajo:'Trabajo', personal:'Personal', estudio:'Estudio', salud:'Salud', otro:'Otro' };
 
-  container.innerHTML = tasks.slice(0, 6).map(t => {
+  container.innerHTML = tasks.slice(0, 8).map(t => {
     const isDaily  = t.task_type === 'daily';
-    const overdue  = !t.done && t.due_date && t.due_date < todayStr();
-    const dueCls   = overdue ? 'is-overdue' : '';
+    const today    = todayStr();
+    const overdue  = !t.done && t.due_date && t.due_date < today;
+    const isToday  = t.due_date === today;
+    const dueCls   = overdue ? 'is-overdue' : isToday ? 'is-today' : '';
+
+    const subtasks = typeof dbGetSubtasks === 'function' ? dbGetSubtasks(t.id) : [];
+    const subDone  = subtasks.filter(s => s.done).length;
+    const subTotal = subtasks.length;
+    const subPct   = subTotal > 0 ? Math.round(subDone / subTotal * 100) : 0;
 
     return `
-      <div class="dash-task-row" data-id="${t.id}">
+      <div class="dash-task-row" data-id="${t.id}" onclick="setView('inbox'); setTimeout(()=>openTaskDetail('${t.id}'),80)">
         <button class="task-check ${t.done ? 'is-done' : ''}"
-          onclick="toggleTask('${t.id}');renderDashboard()" aria-label="Completar"></button>
-        <span class="dash-task-text ${t.done ? 'is-done' : ''}">${escHtml(t.text)}</span>
+          onclick="event.stopPropagation(); toggleTask('${t.id}')" aria-label="Completar"></button>
+        <div class="dash-task-body">
+          <span class="dash-task-text ${t.done ? 'is-done' : ''}">${escHtml(t.text)}</span>
+          ${subTotal > 0 ? `
+          <div class="task-subtask-info">
+            <div class="task-subtask-bar"><div class="task-subtask-fill" style="width:${subPct}%"></div></div>
+            <span class="task-subtask-count">${subDone}/${subTotal}</span>
+          </div>` : ''}
+        </div>
         <div class="dash-task-chips">
-          ${isDaily ? `<span class="type-badge type-daily" title="Tarea del día"><i class="ti ti-sun"></i></span>` : ''}
+          ${isDaily ? `<span class="type-badge type-daily"><i class="ti ti-sun"></i></span>` : ''}
           ${t.category ? `<span class="cat-chip cat-${t.category}">${catLabels[t.category] || t.category}</span>` : ''}
           ${t.due_date && !isDaily ? `<span class="due-chip ${dueCls}">${fmtDueDate(t.due_date)}</span>` : ''}
         </div>
       </div>`;
   }).join('');
 
-  if (tasks.length > 6) {
+  if (tasks.length > 8) {
     container.innerHTML += `
-      <button class="btn-link dash-see-more" onclick="setView('today')">
-        Ver ${tasks.length - 6} más…
+      <button class="btn-link dash-see-more" onclick="setView('inbox')">
+        Ver ${tasks.length - 8} más…
       </button>`;
   }
 }

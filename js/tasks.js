@@ -2,7 +2,8 @@
 
 let currentView = 'inbox';
 let dragSrcId   = null;
-let qaTaskType  = 'persistent'; // 'daily' | 'persistent'
+let qaTaskType  = 'persistent';
+let modalTaskId = null;
 
 // ── Date helpers ───────────────────────────────────────
 function todayStr() {
@@ -53,7 +54,6 @@ const VIEW_TITLES = {
 };
 
 // ── Daily task cleanup ─────────────────────────────────
-// Called on app init to archive daily tasks from previous days
 function cleanupDailyTasks() {
   const today = todayStr();
   const tasks = LOCAL.get('tasks');
@@ -76,7 +76,6 @@ function setQaType(type) {
   qaTaskType = type;
   document.getElementById('qa-type-persistent')?.classList.toggle('active', type === 'persistent');
   document.getElementById('qa-type-daily')?.classList.toggle('active', type === 'daily');
-  // Daily tasks don't need a date
   const dateInput = document.getElementById('qa-date');
   if (dateInput) {
     dateInput.style.display = type === 'daily' ? 'none' : '';
@@ -85,20 +84,14 @@ function setQaType(type) {
 }
 
 function openQuickAdd() {
-  // If the tasks section is hidden (e.g. called from dashboard), navigate there first
   const tasksSection = document.getElementById('section-tasks');
   if (tasksSection && tasksSection.classList.contains('hidden')) {
     setView(currentView || 'inbox');
   }
-
   const qa = document.getElementById('quick-add');
   if (!qa.hidden) { document.getElementById('qa-input').focus(); return; }
   qa.hidden = false;
-
-  // Reset type
   setQaType('persistent');
-
-  // Pre-fill for context
   if (currentView === 'today') {
     setQaType('persistent');
     const di = document.getElementById('qa-date');
@@ -168,27 +161,6 @@ function showEditPopover(anchorEl, items, onSelect) {
   setTimeout(() => document.addEventListener('click', () => pop.remove(), { once: true }), 0);
 }
 
-async function editPriority(e, id) {
-  e.stopPropagation();
-  showEditPopover(e.currentTarget, [
-    { label: '⬤  Alta',  value: 'high', cls: 'pop-high' },
-    { label: '⬤  Media', value: 'med',  cls: 'pop-med'  },
-    { label: '⬤  Baja',  value: 'low',  cls: 'pop-low'  },
-  ], async priority => { await dbUpdateTask(id, { priority }); renderTasks(); renderDashboard(); });
-}
-
-async function editCategory(e, id) {
-  e.stopPropagation();
-  showEditPopover(e.currentTarget, [
-    { label: '—  Sin categoría', value: ''         },
-    { label: '●  Trabajo',       value: 'trabajo',  cls: 'pop-cat-trabajo'  },
-    { label: '●  Personal',      value: 'personal', cls: 'pop-cat-personal' },
-    { label: '●  Estudio',       value: 'estudio',  cls: 'pop-cat-estudio'  },
-    { label: '●  Salud',         value: 'salud',    cls: 'pop-cat-salud'    },
-    { label: '●  Otro',          value: 'otro',     cls: 'pop-cat-otro'     },
-  ], async category => { await dbUpdateTask(id, { category: category || null }); renderTasks(); renderDashboard(); });
-}
-
 // ── Core task operations ───────────────────────────────
 async function toggleTask(id) {
   const tasks = LOCAL.get('tasks');
@@ -196,9 +168,11 @@ async function toggleTask(id) {
   if (!t) return;
   await dbUpdateTask(id, { done: !t.done });
   renderTasks();
+  renderDashboard();
 }
 
 async function deleteTask(id) {
+  dbDeleteSubtasksForTask(id);
   await dbDeleteTask(id);
   renderTasks();
   renderDashboard();
@@ -228,7 +202,133 @@ function updateBadges() {
   }
 }
 
-// ── Render tasks ───────────────────────────────────────
+// ── Task Detail Modal ──────────────────────────────────
+function openTaskDetail(id) {
+  const tasks = LOCAL.get('tasks');
+  const t = tasks.find(t => t.id === id);
+  if (!t) return;
+
+  modalTaskId = id;
+
+  document.getElementById('td-title').value    = t.text || '';
+  document.getElementById('td-priority').value = t.priority || 'med';
+  document.getElementById('td-category').value = t.category || '';
+  document.getElementById('td-due').value      = t.due_date || '';
+  document.getElementById('td-notes').value    = t.notes || '';
+
+  const checkEl = document.getElementById('td-check');
+  if (checkEl) checkEl.classList.toggle('is-done', !!t.done);
+
+  renderModalSubtasks(id);
+
+  const overlay = document.getElementById('task-detail-overlay');
+  overlay.hidden = false;
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => document.getElementById('td-title')?.focus(), 50);
+}
+
+function closeTaskDetail() {
+  document.getElementById('task-detail-overlay').hidden = true;
+  document.body.style.overflow = '';
+  modalTaskId = null;
+}
+
+function handleTaskDetailOverlayClick(e) {
+  if (e.target.id === 'task-detail-overlay') {
+    saveTaskDetail().then(() => closeTaskDetail());
+  }
+}
+
+async function saveTaskDetail() {
+  if (!modalTaskId) return;
+  const title = document.getElementById('td-title').value.trim();
+  if (!title) return;
+  const changes = {
+    text:     title,
+    priority: document.getElementById('td-priority').value,
+    category: document.getElementById('td-category').value || null,
+    due_date: document.getElementById('td-due').value || null,
+    notes:    document.getElementById('td-notes').value.trim() || null,
+  };
+  await dbUpdateTask(modalTaskId, changes);
+  renderTasks();
+  renderDashboard();
+}
+
+async function toggleTaskFromModal() {
+  if (!modalTaskId) return;
+  const tasks = LOCAL.get('tasks');
+  const t = tasks.find(t => t.id === modalTaskId);
+  if (!t) return;
+  await dbUpdateTask(modalTaskId, { done: !t.done });
+  const checkEl = document.getElementById('td-check');
+  if (checkEl) checkEl.classList.toggle('is-done', !t.done);
+  renderTasks();
+  renderDashboard();
+}
+
+async function deleteTaskFromModal() {
+  if (!modalTaskId) return;
+  if (!confirm('¿Eliminar esta tarea?')) return;
+  const id = modalTaskId;
+  closeTaskDetail();
+  dbDeleteSubtasksForTask(id);
+  await dbDeleteTask(id);
+  renderTasks();
+  renderDashboard();
+}
+
+// ── Subtask management ─────────────────────────────────
+function renderModalSubtasks(taskId) {
+  const subtasks = dbGetSubtasks(taskId);
+  const list = document.getElementById('td-subtasks-list');
+  const pct  = document.getElementById('td-subtasks-pct');
+  if (!list) return;
+
+  if (subtasks.length > 0) {
+    const done = subtasks.filter(s => s.done).length;
+    if (pct) pct.textContent = `${done}/${subtasks.length}`;
+  } else {
+    if (pct) pct.textContent = '';
+  }
+
+  list.innerHTML = subtasks.map(s => `
+    <div class="subtask-item${s.done ? ' is-done' : ''}" data-sid="${s.id}">
+      <button class="task-check${s.done ? ' is-done' : ''}"
+        onclick="toggleSubtaskItem('${s.id}')" aria-label="Completar subtarea"></button>
+      <span class="subtask-text">${escHtml(s.text)}</span>
+      <button class="subtask-del" onclick="deleteSubtaskItem('${s.id}')" aria-label="Eliminar subtarea">
+        <i class="ti ti-x"></i>
+      </button>
+    </div>
+  `).join('');
+}
+
+async function toggleSubtaskItem(sid) {
+  dbToggleSubtask(sid);
+  if (modalTaskId) renderModalSubtasks(modalTaskId);
+  renderTasks();
+}
+
+async function deleteSubtaskItem(sid) {
+  dbDeleteSubtask(sid);
+  if (modalTaskId) renderModalSubtasks(modalTaskId);
+  renderTasks();
+}
+
+function addSubtaskFromInput() {
+  if (!modalTaskId) return;
+  const input = document.getElementById('td-subtask-input');
+  const text  = input.value.trim();
+  if (!text) return;
+  dbAddSubtask(modalTaskId, text);
+  input.value = '';
+  renderModalSubtasks(modalTaskId);
+  renderTasks();
+  input.focus();
+}
+
+// ── Render tasks as cards ──────────────────────────────
 async function renderTasks() {
   const all      = LOCAL.get('tasks');
   const filterFn = VIEW_FILTERS[currentView] || VIEW_FILTERS.inbox;
@@ -251,48 +351,95 @@ async function renderTasks() {
   const catLabels = { trabajo:'Trabajo', personal:'Personal', estudio:'Estudio', salud:'Salud', otro:'Otro' };
 
   list.innerHTML = filtered.map(t => {
-    const cat     = t.category;
-    const overdue = !t.done && t.task_type !== 'daily' && t.due_date && t.due_date < today;
-    const isToday = !t.done && t.due_date === today;
-    const dueCls  = overdue ? 'is-overdue' : isToday ? 'is-today' : '';
+    const cat      = t.category;
+    const overdue  = !t.done && t.task_type !== 'daily' && t.due_date && t.due_date < today;
+    const isToday  = !t.done && t.due_date === today;
+    const dueCls   = overdue ? 'is-overdue' : isToday ? 'is-today' : '';
     const dueLabel = t.task_type !== 'daily' && t.due_date ? fmtDueDate(t.due_date) : '';
     const isDaily  = t.task_type === 'daily';
 
+    const subtasks = dbGetSubtasks(t.id);
+    const subDone  = subtasks.filter(s => s.done).length;
+    const subTotal = subtasks.length;
+    const subPct   = subTotal > 0 ? Math.round(subDone / subTotal * 100) : 0;
+
+    const hasChips = cat || dueLabel || isDaily;
+
     return `
-      <div class="task-row${t.done ? ' is-done' : ''}" data-id="${t.id}" draggable="true">
-        <button class="task-check${t.done ? ' is-done' : ''}"
-          onclick="toggleTask('${t.id}')" aria-label="Completar tarea"></button>
-        <span class="task-text">${escHtml(t.text)}</span>
-        <div class="task-chips">
-          ${isDaily ? `<span class="type-badge type-daily" title="Tarea del día"><i class="ti ti-sun"></i></span>` : ''}
-          ${cat
-            ? `<span class="cat-chip cat-${cat} is-editable" onclick="editCategory(event,'${t.id}')" title="Cambiar categoría">${catLabels[cat] || cat}</span>`
-            : `<span class="cat-chip cat-empty is-editable" onclick="editCategory(event,'${t.id}')" title="Agregar categoría">+</span>`}
-          <span class="pri-dot p-${t.priority || 'med'} is-editable" onclick="editPriority(event,'${t.id}')" title="Cambiar prioridad"></span>
-          ${dueLabel ? `<span class="due-chip ${dueCls}">${dueLabel}</span>` : ''}
+      <div class="task-card${t.done ? ' is-done' : ''}" data-id="${t.id}">
+        <div class="task-card-main">
+          <button class="task-check${t.done ? ' is-done' : ''}"
+            onclick="event.stopPropagation(); toggleTask('${t.id}')"
+            aria-label="Completar tarea"></button>
+          <div class="task-card-body" onclick="openTaskDetail('${t.id}')">
+            <span class="task-card-title">${escHtml(t.text)}</span>
+            ${subTotal > 0 ? `
+            <div class="task-subtask-info">
+              <div class="task-subtask-bar">
+                <div class="task-subtask-fill" style="width:${subPct}%"></div>
+              </div>
+              <span class="task-subtask-count">${subDone}/${subTotal}</span>
+            </div>` : ''}
+          </div>
+          <span class="pri-pip p-${t.priority || 'med'}" title="Prioridad"></span>
+          <button class="drag-handle" title="Arrastrar para ordenar" aria-label="Arrastrar">
+            <i class="ti ti-grip-vertical"></i>
+          </button>
         </div>
-        <button class="task-del" onclick="deleteTask('${t.id}')" aria-label="Eliminar tarea">
-          <i class="ti ti-x"></i>
-        </button>
+        ${hasChips ? `
+        <div class="task-card-chips">
+          ${isDaily ? `<span class="type-badge type-daily"><i class="ti ti-sun"></i> Hoy</span>` : ''}
+          ${cat ? `<span class="cat-chip cat-${cat}">${catLabels[cat] || cat}</span>` : ''}
+          ${dueLabel ? `<span class="due-chip ${dueCls}"><i class="ti ti-calendar-event"></i> ${dueLabel}</span>` : ''}
+        </div>` : ''}
       </div>`;
   }).join('');
 
-  // Drag-to-reorder
-  list.querySelectorAll('.task-row').forEach(el => {
-    el.addEventListener('dragstart', () => { dragSrcId = el.dataset.id; el.classList.add('dragging'); });
-    el.addEventListener('dragend',   () => { el.classList.remove('dragging'); list.querySelectorAll('.task-row').forEach(r => r.classList.remove('drag-over')); });
-    el.addEventListener('dragover',  e => { e.preventDefault(); el.classList.add('drag-over'); });
+  // ── Drag-to-reorder via handle ─────────────────────────
+  list.querySelectorAll('.task-card').forEach(el => {
+    const handle = el.querySelector('.drag-handle');
+
+    if (handle) {
+      handle.addEventListener('pointerdown', () => { el.draggable = true; });
+    }
+
+    el.addEventListener('dragstart', e => {
+      if (!el.draggable) { e.preventDefault(); return; }
+      dragSrcId = el.dataset.id;
+      // Defer to allow the browser to capture the drag image first
+      requestAnimationFrame(() => el.classList.add('dragging'));
+    });
+
+    el.addEventListener('dragend', () => {
+      el.draggable = false;
+      el.classList.remove('dragging');
+      list.querySelectorAll('.task-card').forEach(r => r.classList.remove('drag-over'));
+    });
+
+    el.addEventListener('dragover', e => {
+      e.preventDefault();
+      if (dragSrcId !== el.dataset.id) el.classList.add('drag-over');
+    });
+
     el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
+
     el.addEventListener('drop', e => {
       e.preventDefault();
       el.classList.remove('drag-over');
-      if (dragSrcId === el.dataset.id) return;
-      const items   = [...list.querySelectorAll('.task-row')];
-      const srcIdx  = items.findIndex(i => i.dataset.id === dragSrcId);
-      const dstIdx  = items.findIndex(i => i.dataset.id === el.dataset.id);
-      const ordered = LOCAL.get('tasks').filter(t => filtered.some(f => f.id === t.id));
+      if (!dragSrcId || dragSrcId === el.dataset.id) return;
+
+      const items  = [...list.querySelectorAll('.task-card')];
+      const srcIdx = items.findIndex(i => i.dataset.id === dragSrcId);
+      const dstIdx = items.findIndex(i => i.dataset.id === el.dataset.id);
+
+      const filteredIds = filtered.map(t => t.id);
+      const ordered = LOCAL.get('tasks')
+        .filter(t => filteredIds.includes(t.id))
+        .sort((a, b) => filteredIds.indexOf(a.id) - filteredIds.indexOf(b.id));
+
       const [moved] = ordered.splice(srcIdx, 1);
       ordered.splice(dstIdx, 0, moved);
+
       dbReorderTasks(ordered.map(t => t.id));
       renderTasks();
     });
@@ -303,21 +450,30 @@ async function renderTasks() {
 document.addEventListener('keydown', e => {
   const tag = document.activeElement.tagName;
   if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
-    if (e.key === 'Escape') { document.activeElement.blur(); closeQuickAdd(); }
-    if (e.key === 'Enter' && document.activeElement.id === 'qa-input') {
-      e.preventDefault(); submitQuickAdd();
+    if (e.key === 'Escape') {
+      document.activeElement.blur();
+      closeQuickAdd();
+      closeTaskDetail();
+    }
+    if (e.key === 'Enter') {
+      if (document.activeElement.id === 'qa-input') {
+        e.preventDefault(); submitQuickAdd();
+      }
+      if (document.activeElement.id === 'td-subtask-input') {
+        e.preventDefault(); addSubtaskFromInput();
+      }
     }
     return;
   }
   if (e.metaKey || e.ctrlKey || e.altKey) return;
   switch (e.key) {
     case 'n': case 'N': e.preventDefault(); openQuickAdd(); break;
-    case 'Escape': closeQuickAdd(); break;
+    case 'Escape': closeQuickAdd(); closeTaskDetail(); break;
     case '1': setViewFromKey('inbox');     break;
     case '2': setViewFromKey('today');     break;
-    case '3': setViewFromKey('upcoming'); break;
-    case '4': setViewFromKey('overdue');  break;
-    case '5': setViewFromKey('completed');break;
+    case '3': setViewFromKey('upcoming');  break;
+    case '4': setViewFromKey('overdue');   break;
+    case '5': setViewFromKey('completed'); break;
     case '[': toggleSidebar(); break;
   }
 });
