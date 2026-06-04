@@ -200,12 +200,32 @@ async function submitHabitForm() {
   renderDashboard();
 }
 
+let _lastDeletedHabit = null;
+let _lastDeletedHabitCompletions = [];
+
 async function deleteHabit(id) {
-  if (!confirm('¿Eliminar este hábito y todo su historial?')) return;
+  _lastDeletedHabit = LOCAL.get('habits').find(h => h.id === id);
+  _lastDeletedHabitCompletions = LOCAL.get('habit_completions').filter(c => c.habit_id === id);
+
   await dbDeleteHabit(id);
   renderHabits();
   renderDashboard();
   updateHabitBadge();
+
+  showToast('Hábito eliminado', async () => {
+    if (!_lastDeletedHabit) return;
+    const habits = LOCAL.get('habits');
+    habits.push(_lastDeletedHabit);
+    LOCAL.set('habits', habits);
+    const completions = LOCAL.get('habit_completions');
+    _lastDeletedHabitCompletions.forEach(c => { if (!completions.find(x => x.id === c.id)) completions.push(c); });
+    LOCAL.set('habit_completions', completions);
+    _lastDeletedHabit = null;
+    _lastDeletedHabitCompletions = [];
+    renderHabits();
+    renderDashboard();
+    updateHabitBadge();
+  });
 }
 
 // ── Wire up on DOM ready ──────────────────────────────

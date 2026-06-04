@@ -2099,7 +2099,134 @@ input::placeholder { color: var(--text-3); }
   .stats-grid { grid-template-columns: 1fr; }
   .form-row { grid-template-columns: 1fr; }
   .dash-habits-strip { gap: 6px; }
+  .dash-cats-grid { grid-template-columns: repeat(3, 1fr); }
 }
+
+/* ─── Category cards (dashboard) ────────────────────── */
+.dash-cats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.dash-cat-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 14px 14px 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: box-shadow 0.16s, border-color 0.16s, transform 0.14s;
+  box-shadow: var(--s1);
+  border-top: 3px solid var(--cat-accent, var(--accent));
+  position: relative;
+  overflow: hidden;
+}
+.dash-cat-card:hover {
+  box-shadow: var(--s2);
+  border-color: var(--line-strong);
+  transform: translateY(-1px);
+}
+.dash-cat-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.dash-cat-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.2;
+}
+.dash-cat-count {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+.dash-cat-card--add {
+  border-top-color: var(--line-strong);
+  align-items: center;
+  justify-content: center;
+  color: var(--text-3);
+  gap: 6px;
+  min-height: 80px;
+  border-style: dashed;
+}
+.dash-cat-card--add i { font-size: 20px; }
+.dash-cat-card--add .dash-cat-name { color: var(--text-3); font-weight: 500; }
+.dash-cat-card--add:hover { color: var(--accent); border-color: var(--accent); }
+.dash-cat-card--add:hover .dash-cat-name { color: var(--accent); }
+
+/* ─── Pinned tasks widget ────────────────────────────── */
+.dash-widget--pinned {
+  margin-bottom: 20px;
+  border-left: 3px solid var(--accent);
+}
+.dash-widget--pinned .dash-widget-hdr h3 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.dash-widget--pinned .dash-widget-hdr h3 i {
+  font-size: 14px;
+  color: var(--accent);
+}
+.dash-task-row--pinned { border-radius: var(--r-sm); }
+
+/* ─── Pin button ──────────────────────────────────────── */
+.pin-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-3);
+  font-size: 14px;
+  padding: 4px 5px;
+  border-radius: var(--r-sm);
+  display: flex;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.14s, color 0.14s, background 0.14s;
+  flex-shrink: 0;
+}
+.task-card:hover .pin-btn { opacity: 1; }
+.pin-btn:hover { color: var(--accent); background: var(--accent-soft); }
+.pin-btn.is-pinned {
+  opacity: 1;
+  color: var(--accent);
+}
+.task-card.is-pinned {
+  border-left: 3px solid var(--accent);
+}
+
+/* ─── Add category nav item ─────────────────────────── */
+.nav-item--add-cat {
+  color: var(--text-3) !important;
+  font-style: normal;
+}
+.nav-item--add-cat:hover { color: var(--accent) !important; }
+.nav-item--add-cat i { font-size: 13px; opacity: 0.7; }
+
+/* ─── Cat color opts (reuse color-opt style) ─────────── */
+.cat-color-opt {
+  width: 28px; height: 28px; border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.14s var(--ease-spring), box-shadow 0.14s;
+  outline: none;
+}
+.cat-color-opt:hover { transform: scale(1.12); }
+.cat-color-opt.active {
+  box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px currentColor;
+  transform: scale(1.08);
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -2543,6 +2670,24 @@ input::placeholder { color: var(--text-3); }
   transition: background 0.14s;
 }
 .td-delete-btn:hover { background: var(--danger-soft); }
+
+.td-pin-btn {
+  background: none;
+  border: 1px solid var(--line-strong);
+  cursor: pointer;
+  color: var(--text-3);
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+  padding: 7px 12px;
+  border-radius: var(--r-sm);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.14s, color 0.14s, border-color 0.14s;
+}
+.td-pin-btn:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+.td-pin-btn.is-pinned { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
 
 /* ─── Mobile adjustments ──────────────────────────────── */
 @media (max-width: 540px) {

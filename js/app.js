@@ -4,6 +4,131 @@ let realtimeChannel  = null;
 let navInitialized   = false;
 const ALL_SECTIONS   = ['dashboard','tasks','habits','goals','stats','calendar','ideas'];
 
+// ── Custom Categories ──────────────────────────────────
+const DEFAULT_CAT_COLORS = ['#0284c7','#ea580c','#7c3aed','#16a34a','#6b7280','#e11d48','#d97706','#0891b2'];
+
+function getCustomCategories() {
+  if (!userId) return [];
+  return JSON.parse(localStorage.getItem('custom_categories_' + userId) || '[]');
+}
+
+function saveCustomCategories(cats) {
+  localStorage.setItem('custom_categories_' + userId, JSON.stringify(cats));
+}
+
+function openCategoryModal(editId = null) {
+  document.getElementById('cat-modal-name').value = '';
+  document.getElementById('cat-modal-form').dataset.editId = '';
+  const colorOpts = document.querySelectorAll('.cat-color-opt');
+  colorOpts.forEach((b, i) => b.classList.toggle('active', i === 0));
+  document.getElementById('cat-modal-color').value = DEFAULT_CAT_COLORS[0];
+
+  if (editId) {
+    const cat = getCustomCategories().find(c => c.id === editId);
+    if (cat) {
+      document.getElementById('cat-modal-name').value = cat.name;
+      document.getElementById('cat-modal-color').value = cat.color;
+      document.getElementById('cat-modal-form').dataset.editId = editId;
+      colorOpts.forEach(b => b.classList.toggle('active', b.dataset.color === cat.color));
+    }
+  }
+  openModal('modal-category-form');
+  setTimeout(() => document.getElementById('cat-modal-name')?.focus(), 80);
+}
+
+function submitCategoryForm() {
+  const name = document.getElementById('cat-modal-name').value.trim();
+  if (!name) { document.getElementById('cat-modal-name').focus(); return; }
+  const color  = document.getElementById('cat-modal-color').value || DEFAULT_CAT_COLORS[0];
+  const editId = document.getElementById('cat-modal-form').dataset.editId;
+  const cats   = getCustomCategories();
+
+  if (editId) {
+    const idx = cats.findIndex(c => c.id === editId);
+    if (idx !== -1) { cats[idx].name = name; cats[idx].color = color; }
+  } else {
+    cats.push({ id: crypto.randomUUID(), name, color });
+  }
+  saveCustomCategories(cats);
+  closeModal('modal-category-form');
+  if (typeof registerCustomCategoryFilters === 'function') registerCustomCategoryFilters();
+  renderSidebarCustomCats();
+  renderDashboard();
+  refreshCategoryDropdowns();
+}
+
+function deleteCustomCategory(id) {
+  const cats = getCustomCategories().filter(c => c.id !== id);
+  saveCustomCategories(cats);
+  if (typeof registerCustomCategoryFilters === 'function') registerCustomCategoryFilters();
+  renderSidebarCustomCats();
+  renderDashboard();
+  refreshCategoryDropdowns();
+  // unassign tasks from this category
+  const tasks = LOCAL.get('tasks');
+  const updated = tasks.map(t => t.category === 'custom-' + id ? { ...t, category: null } : t);
+  LOCAL.set('tasks', updated);
+  if (typeof renderTasks === 'function') renderTasks();
+}
+
+function selectCatModalColor(color, el) {
+  document.getElementById('cat-modal-color').value = color;
+  document.querySelectorAll('.cat-color-opt').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function renderSidebarCustomCats() {
+  const container = document.getElementById('sidebar-custom-cats');
+  if (!container) return;
+  const cats = getCustomCategories();
+  container.innerHTML = cats.map(c => `
+    <button class="nav-item" data-view="cat-custom-${c.id}">
+      <span class="cat-dot" style="background:${c.color}"></span>
+      <span>${escHtml(c.name)}</span>
+      <span class="nav-badge" id="cnt-custom-${c.id}"></span>
+    </button>`).join('');
+
+  // wire up click events
+  container.querySelectorAll('[data-view]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      setView(btn.dataset.view);
+      closeMobileSidebar();
+    });
+  });
+}
+
+function refreshCategoryDropdowns() {
+  const cats = getCustomCategories();
+  const customOpts = cats.map(c => `<option value="custom-${c.id}">${escHtml(c.name)}</option>`).join('');
+
+  ['qa-cat', 'td-category'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    // remove old custom options
+    sel.querySelectorAll('[data-custom]').forEach(o => o.remove());
+    if (customOpts) {
+      const temp = document.createElement('div');
+      temp.innerHTML = customOpts;
+      temp.querySelectorAll('option').forEach(o => {
+        o.dataset.custom = '1';
+        sel.appendChild(o);
+      });
+    }
+  });
+}
+
+function updateCustomCatBadges() {
+  const tasks = LOCAL.get('tasks');
+  const cats = getCustomCategories();
+  cats.forEach(c => {
+    const el = document.getElementById('cnt-custom-' + c.id);
+    if (el) {
+      const count = tasks.filter(t => !t.done && t.category === 'custom-' + c.id).length;
+      el.textContent = count > 0 ? count : '';
+    }
+  });
+}
+
 // ── Modal system ───────────────────────────────────────
 function openModal(id) {
   const backdrop = document.getElementById('modal-backdrop');
@@ -173,6 +298,11 @@ async function initApp(uid) {
   await syncAll();
 
   if (!navInitialized) { initNav(); navInitialized = true; }
+
+  // Init custom categories
+  if (typeof registerCustomCategoryFilters === 'function') registerCustomCategoryFilters();
+  renderSidebarCustomCats();
+  refreshCategoryDropdowns();
 
   // Default: show dashboard
   showSection('dashboard');

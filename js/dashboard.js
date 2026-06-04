@@ -45,6 +45,13 @@ function renderDashboard() {
   const overdueCard = document.getElementById('dash-stat-overdue')?.closest('.stat-card');
   if (overdueCard) overdueCard.classList.toggle('stat-card--danger', overdueTasks.length > 0);
 
+  // ── Category cards ────────────────────────────────
+  renderDashboardCategories(tasks);
+
+  // ── Pinned tasks ──────────────────────────────────
+  const pinnedTasks = tasks.filter(t => !t.done && t.pinned);
+  renderDashboardPinned(pinnedTasks);
+
   // ── Today tasks list ──────────────────────────────
   renderDashboardTasks(allForToday);
 
@@ -68,7 +75,9 @@ function renderDashboardTasks(tasks) {
     return;
   }
 
+  const customCats = getCustomCategories ? getCustomCategories() : [];
   const catLabels = { trabajo:'Trabajo', personal:'Personal', estudio:'Estudio', salud:'Salud', otro:'Otro' };
+  customCats.forEach(c => { catLabels['custom-' + c.id] = c.name; });
 
   container.innerHTML = tasks.slice(0, 8).map(t => {
     const isDaily  = t.task_type === 'daily';
@@ -185,4 +194,82 @@ function renderDashboardGoals(goals) {
         Ver todos (${goals.length})
       </button>`;
   }
+}
+
+function renderDashboardCategories(tasks) {
+  const container = document.getElementById('dash-cats-grid');
+  if (!container) return;
+
+  const defaultCats = [
+    { id: 'trabajo',  name: 'Trabajo',  color: '#0284c7', view: 'cat-trabajo'  },
+    { id: 'personal', name: 'Personal', color: '#ea580c', view: 'cat-personal' },
+    { id: 'estudio',  name: 'Estudio',  color: '#7c3aed', view: 'cat-estudio'  },
+    { id: 'salud',    name: 'Salud',    color: '#16a34a', view: 'cat-salud'    },
+    { id: 'otro',     name: 'Otro',     color: '#6b7280', view: 'cat-otro'     },
+  ];
+
+  const customCats = (typeof getCustomCategories === 'function' ? getCustomCategories() : [])
+    .map(c => ({ id: 'custom-' + c.id, name: c.name, color: c.color, view: 'cat-custom-' + c.id }));
+
+  const allCats = [...defaultCats, ...customCats];
+
+  const countFor = (cat) => {
+    if (cat.view === 'cat-otro') return tasks.filter(t => !t.done && (!t.category || t.category === 'otro')).length;
+    return tasks.filter(t => !t.done && t.category === cat.id).length;
+  };
+
+  container.innerHTML = allCats.map(cat => {
+    const count = countFor(cat);
+    return `
+      <button class="dash-cat-card" onclick="setView('${cat.view}')" style="--cat-accent:${cat.color}">
+        <span class="dash-cat-dot" style="background:${cat.color}"></span>
+        <span class="dash-cat-name">${escHtml(cat.name)}</span>
+        <span class="dash-cat-count">${count}</span>
+      </button>`;
+  }).join('');
+
+  container.innerHTML += `
+    <button class="dash-cat-card dash-cat-card--add" onclick="openCategoryModal()">
+      <i class="ti ti-plus"></i>
+      <span class="dash-cat-name">Nueva</span>
+    </button>`;
+}
+
+function renderDashboardPinned(pinnedTasks) {
+  const section = document.getElementById('dash-pinned-section');
+  const container = document.getElementById('dash-pinned-list');
+  if (!section || !container) return;
+
+  if (!pinnedTasks.length) {
+    section.hidden = true;
+    return;
+  }
+  section.hidden = false;
+
+  const customCats = typeof getCustomCategories === 'function' ? getCustomCategories() : [];
+  const catLabels = { trabajo:'Trabajo', personal:'Personal', estudio:'Estudio', salud:'Salud', otro:'Otro' };
+  customCats.forEach(c => { catLabels['custom-' + c.id] = c.name; });
+
+  container.innerHTML = pinnedTasks.map(t => {
+    const today = todayStr();
+    const overdue = !t.done && t.due_date && t.due_date < today;
+    const isToday = t.due_date === today;
+    const dueCls  = overdue ? 'is-overdue' : isToday ? 'is-today' : '';
+
+    return `
+      <div class="dash-task-row dash-task-row--pinned" data-id="${t.id}" onclick="setView('inbox'); setTimeout(()=>openTaskDetail('${t.id}'),80)">
+        <button class="task-check ${t.done ? 'is-done' : ''}"
+          onclick="event.stopPropagation(); toggleTask('${t.id}')" aria-label="Completar"></button>
+        <div class="dash-task-body">
+          <span class="dash-task-text">${escHtml(t.text)}</span>
+        </div>
+        <div class="dash-task-chips">
+          ${t.category ? `<span class="cat-chip cat-${t.category.startsWith('custom-') ? 'otro' : t.category}">${catLabels[t.category] || t.category}</span>` : ''}
+          ${t.due_date && t.task_type !== 'daily' ? `<span class="due-chip ${dueCls}">${fmtDueDate(t.due_date)}</span>` : ''}
+          <button class="pin-btn is-pinned" onclick="event.stopPropagation(); togglePin(event,'${t.id}')" title="Quitar del inicio">
+            <i class="ti ti-pin"></i>
+          </button>
+        </div>
+      </div>`;
+  }).join('');
 }

@@ -149,6 +149,12 @@
             <span>Otro</span>
             <span class="nav-badge" id="cnt-otro"></span>
           </button>
+          <!-- Custom categories rendered by JS -->
+          <div id="sidebar-custom-cats"></div>
+          <button class="nav-item nav-item--add-cat" onclick="openCategoryModal()">
+            <i class="ti ti-plus"></i>
+            <span>Nueva categoría</span>
+          </button>
         </div>
 
         <div class="nav-divider"></div>
@@ -280,6 +286,18 @@
                 <span class="stat-lbl">Objetivos activos</span>
               </div>
             </div>
+          </div>
+
+          <!-- Category cards -->
+          <div id="dash-cats-grid" class="dash-cats-grid"></div>
+
+          <!-- Pinned tasks -->
+          <div id="dash-pinned-section" class="dash-widget dash-widget--pinned" hidden>
+            <div class="dash-widget-hdr">
+              <h3><i class="ti ti-pin"></i> Fijadas</h3>
+              <button class="btn-link" onclick="setView('pinned')">Ver todas</button>
+            </div>
+            <div id="dash-pinned-list" class="dash-task-list"></div>
           </div>
 
           <div class="dash-body">
@@ -536,6 +554,40 @@
     </form>
   </div>
 
+  <!-- Category modal -->
+  <div id="modal-category-form" class="modal-card hidden" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Nueva categoría</h3>
+      <button class="icon-btn" onclick="closeModal('modal-category-form')" aria-label="Cerrar">
+        <i class="ti ti-x"></i>
+      </button>
+    </div>
+    <form id="cat-modal-form" onsubmit="event.preventDefault();submitCategoryForm()">
+      <div class="form-group">
+        <label for="cat-modal-name">Nombre</label>
+        <input type="text" id="cat-modal-name" placeholder="Ej: Freelance" required autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label>Color</label>
+        <div class="color-options">
+          <button type="button" class="cat-color-opt active" data-color="#0284c7" style="background:#0284c7" onclick="selectCatModalColor('#0284c7',this)"></button>
+          <button type="button" class="cat-color-opt" data-color="#ea580c" style="background:#ea580c" onclick="selectCatModalColor('#ea580c',this)"></button>
+          <button type="button" class="cat-color-opt" data-color="#7c3aed" style="background:#7c3aed" onclick="selectCatModalColor('#7c3aed',this)"></button>
+          <button type="button" class="cat-color-opt" data-color="#16a34a" style="background:#16a34a" onclick="selectCatModalColor('#16a34a',this)"></button>
+          <button type="button" class="cat-color-opt" data-color="#e11d48" style="background:#e11d48" onclick="selectCatModalColor('#e11d48',this)"></button>
+          <button type="button" class="cat-color-opt" data-color="#d97706" style="background:#d97706" onclick="selectCatModalColor('#d97706',this)"></button>
+          <button type="button" class="cat-color-opt" data-color="#0891b2" style="background:#0891b2" onclick="selectCatModalColor('#0891b2',this)"></button>
+          <button type="button" class="cat-color-opt" data-color="#6b7280" style="background:#6b7280" onclick="selectCatModalColor('#6b7280',this)"></button>
+        </div>
+        <input type="hidden" id="cat-modal-color" value="#0284c7">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="closeModal('modal-category-form')">Cancelar</button>
+        <button type="submit" class="btn-primary">Guardar</button>
+      </div>
+    </form>
+  </div>
+
   <!-- Goal modal -->
   <div id="modal-goal-form" class="modal-card hidden" onclick="event.stopPropagation()">
     <div class="modal-header">
@@ -656,6 +708,9 @@
       <button class="td-delete-btn" onclick="deleteTaskFromModal()">
         <i class="ti ti-trash"></i> Eliminar tarea
       </button>
+      <button class="td-pin-btn" id="td-pin-btn" onclick="togglePinFromModal()" title="Fijar en inicio">
+        <i class="ti ti-pin"></i>
+      </button>
       <button class="btn-primary" onclick="saveTaskDetail().then(closeTaskDetail)">
         Guardar
       </button>
@@ -665,16 +720,16 @@
 </div>
 
 <!-- ══ SCRIPTS ═══════════════════════════════════════════ -->
-<script src="js/config.js?v=7"></script>
-<script src="js/auth.js?v=7"></script>
-<script src="js/db.js?v=7"></script>
-<script src="js/tasks.js?v=7"></script>
-<script src="js/habits.js?v=7"></script>
-<script src="js/goals.js?v=7"></script>
-<script src="js/dashboard.js?v=7"></script>
-<script src="js/stats.js?v=7"></script>
-<script src="js/calendar.js?v=7"></script>
-<script src="js/ideas.js?v=7"></script>
-<script src="js/app.js?v=7"></script>
+<script src="js/config.js?v=8"></script>
+<script src="js/auth.js?v=8"></script>
+<script src="js/db.js?v=8"></script>
+<script src="js/tasks.js?v=8"></script>
+<script src="js/habits.js?v=8"></script>
+<script src="js/goals.js?v=8"></script>
+<script src="js/dashboard.js?v=8"></script>
+<script src="js/stats.js?v=8"></script>
+<script src="js/calendar.js?v=8"></script>
+<script src="js/ideas.js?v=8"></script>
+<script src="js/app.js?v=8"></script>
 </body>
 </html>

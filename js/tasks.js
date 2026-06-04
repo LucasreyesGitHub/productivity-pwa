@@ -39,6 +39,7 @@ const VIEW_FILTERS = {
   },
   overdue:   t => !t.done && t.task_type !== 'daily' && !!t.due_date && t.due_date < todayStr(),
   completed: t => t.done,
+  pinned:    t => !t.done && !!t.pinned,
   'cat-trabajo':  t => !t.done && t.category === 'trabajo',
   'cat-personal': t => !t.done && t.category === 'personal',
   'cat-estudio':  t => !t.done && t.category === 'estudio',
@@ -48,10 +49,18 @@ const VIEW_FILTERS = {
 
 const VIEW_TITLES = {
   inbox: 'Entrada', today: 'Hoy', upcoming: 'Próximas',
-  overdue: 'Vencidas', completed: 'Completadas',
+  overdue: 'Vencidas', completed: 'Completadas', pinned: 'Fijadas',
   'cat-trabajo': 'Trabajo', 'cat-personal': 'Personal',
   'cat-estudio': 'Estudio', 'cat-salud': 'Salud', 'cat-otro': 'Otro',
 };
+
+function registerCustomCategoryFilters() {
+  const cats = getCustomCategories();
+  cats.forEach(c => {
+    VIEW_FILTERS['cat-custom-' + c.id] = t => !t.done && t.category === 'custom-' + c.id;
+    VIEW_TITLES['cat-custom-' + c.id]  = c.name;
+  });
+}
 
 // ── Daily task cleanup ─────────────────────────────────
 function cleanupDailyTasks() {
@@ -190,6 +199,11 @@ async function editPriority(e, id) {
 
 async function editCategory(e, id) {
   e.stopPropagation();
+  const customCats = getCustomCategories();
+  const customItems = customCats.map(c => ({
+    label: '●  ' + c.name,
+    value: 'custom-' + c.id,
+  }));
   showEditPopover(e.currentTarget, [
     { label: '—  Sin categoría', value: ''         },
     { label: '●  Trabajo',       value: 'trabajo',  cls: 'pop-cat-trabajo'  },
@@ -197,7 +211,18 @@ async function editCategory(e, id) {
     { label: '●  Estudio',       value: 'estudio',  cls: 'pop-cat-estudio'  },
     { label: '●  Salud',         value: 'salud',    cls: 'pop-cat-salud'    },
     { label: '●  Otro',          value: 'otro',     cls: 'pop-cat-otro'     },
+    ...customItems,
   ], async category => { await dbUpdateTask(id, { category: category || null }); renderTasks(); renderDashboard(); });
+}
+
+async function togglePin(e, id) {
+  e.stopPropagation();
+  const tasks = LOCAL.get('tasks');
+  const t = tasks.find(t => t.id === id);
+  if (!t) return;
+  await dbUpdateTask(id, { pinned: !t.pinned });
+  renderTasks();
+  renderDashboard();
 }
 
 // ── Core task operations ───────────────────────────────
@@ -255,6 +280,7 @@ function updateBadges() {
     const el = document.getElementById('cnt-' + key);
     if (el) el.textContent = count > 0 ? count : '';
   }
+  if (typeof updateCustomCatBadges === 'function') updateCustomCatBadges();
 }
 
 // ── Focus trap (Bug #8) ────────────────────────────────
@@ -291,6 +317,13 @@ function openTaskDetail(id) {
 
   const checkEl = document.getElementById('td-check');
   if (checkEl) checkEl.classList.toggle('is-done', !!t.done);
+
+  const pinBtn = document.getElementById('td-pin-btn');
+  if (pinBtn) {
+    pinBtn.classList.toggle('is-pinned', !!t.pinned);
+    pinBtn.title = t.pinned ? 'Quitar del inicio' : 'Fijar en inicio';
+    pinBtn.querySelector('i').className = t.pinned ? 'ti ti-pin' : 'ti ti-pin-off';
+  }
 
   renderModalSubtasks(id);
 
@@ -343,6 +376,23 @@ async function saveTaskDetail() {
   renderTasks();
   renderDashboard();
   if (typeof renderCal === 'function') renderCal();
+}
+
+async function togglePinFromModal() {
+  if (!modalTaskId) return;
+  const tasks = LOCAL.get('tasks');
+  const t = tasks.find(t => t.id === modalTaskId);
+  if (!t) return;
+  await dbUpdateTask(modalTaskId, { pinned: !t.pinned });
+  const pinBtn = document.getElementById('td-pin-btn');
+  const nowPinned = !t.pinned;
+  if (pinBtn) {
+    pinBtn.classList.toggle('is-pinned', nowPinned);
+    pinBtn.title = nowPinned ? 'Quitar del inicio' : 'Fijar en inicio';
+    pinBtn.querySelector('i').className = nowPinned ? 'ti ti-pin' : 'ti ti-pin-off';
+  }
+  renderTasks();
+  renderDashboard();
 }
 
 async function toggleTaskFromModal() {
@@ -453,7 +503,9 @@ async function renderTasks() {
   if (empty) empty.hidden = true;
 
   const today     = todayStr();
+  const customCats = getCustomCategories();
   const catLabels = { trabajo:'Trabajo', personal:'Personal', estudio:'Estudio', salud:'Salud', otro:'Otro' };
+  customCats.forEach(c => { catLabels['custom-' + c.id] = c.name; });
 
   list.innerHTML = filtered.map(t => {
     const cat      = t.category;
@@ -469,7 +521,7 @@ async function renderTasks() {
     const hasChips = cat || dueLabel || isDaily;
 
     return `
-      <div class="task-card${t.done ? ' is-done' : ''}" data-id="${t.id}">
+      <div class="task-card${t.done ? ' is-done' : ''}${t.pinned ? ' is-pinned' : ''}" data-id="${t.id}">
         <div class="task-card-main">
           <button class="task-check${t.done ? ' is-done' : ''}"
             onclick="event.stopPropagation(); toggleTask('${t.id}')"
@@ -482,6 +534,9 @@ async function renderTasks() {
               <span class="task-subtask-count">${subDone}/${subTotal}</span>
             </div>` : ''}
           </div>
+          <button class="pin-btn${t.pinned ? ' is-pinned' : ''}" onclick="togglePin(event,'${t.id}')" title="${t.pinned ? 'Quitar del inicio' : 'Fijar en inicio'}" aria-label="Fijar tarea">
+            <i class="ti ti-pin${t.pinned ? '' : '-off'}"></i>
+          </button>
           <span class="pri-pip p-${t.priority || 'med'}"></span>
           <button class="drag-handle" title="Arrastrar para ordenar" aria-label="Arrastrar">
             <i class="ti ti-grip-vertical"></i>
