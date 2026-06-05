@@ -8,9 +8,22 @@ const LOCAL = {
   set: (key, val) => localStorage.setItem(key + '_' + userId, JSON.stringify(val)),
 };
 
-// Tracks habit IDs that were deleted locally but may still exist in Supabase
-// briefly — prevents syncAll from restoring them during the race window.
+// Tracks habit IDs deleted locally. Persisted in localStorage so syncAll
+// never restores them even after a page reload.
 const _pendingHabitDels = new Set();
+
+function _getDeletedHabitIds() {
+  try { return JSON.parse(localStorage.getItem('deleted_habits_' + userId) || '[]'); }
+  catch { return []; }
+}
+function _addDeletedHabitId(id) {
+  const ids = _getDeletedHabitIds();
+  if (!ids.includes(id)) {
+    ids.push(id);
+    if (ids.length > 200) ids.shift();
+    localStorage.setItem('deleted_habits_' + userId, JSON.stringify(ids));
+  }
+}
 
 function setSyncStatus(status, text) {
   const el = document.getElementById('sync-status');
@@ -152,8 +165,8 @@ async function dbGetHabits() {
   try {
     const { data, error } = await sb.from('habits').select('*').eq('user_id', userId).order('created_at');
     if (error) throw error;
-    // Filter out habits pending local deletion to avoid restoring them
-    const filtered = data.filter(h => !_pendingHabitDels.has(h.id));
+    const deletedIds = _getDeletedHabitIds();
+    const filtered = data.filter(h => !_pendingHabitDels.has(h.id) && !deletedIds.includes(h.id));
     LOCAL.set('habits', filtered);
     return filtered;
   } catch { return LOCAL.get('habits'); }
@@ -187,18 +200,16 @@ async function dbUpdateHabit(id, changes) {
 }
 
 async function dbDeleteHabit(id) {
+  // Mark as deleted in-memory AND in localStorage so it survives page reloads
   _pendingHabitDels.add(id);
+  _addDeletedHabitId(id);
   const completions = LOCAL.get('habit_completions').filter(c => c.habit_id !== id);
   LOCAL.set('habit_completions', completions);
   LOCAL.set('habits', LOCAL.get('habits').filter(h => h.id !== id));
   if (isOnline) {
-    await Promise.all([
-      sb.from('habit_completions').delete().eq('habit_id', id).catch(() => {}),
-      sb.from('habits').delete().eq('id', id).eq('user_id', userId).catch(() => {}),
-    ]);
+    sb.from('habit_completions').delete().eq('habit_id', id).catch(() => {});
+    sb.from('habits').delete().eq('id', id).eq('user_id', userId).catch(() => {});
   }
-  // Keep the guard for 8s after Supabase operations complete
-  setTimeout(() => _pendingHabitDels.delete(id), 8000);
 }
 
 // ── HABIT COMPLETIONS ──────────────────────────────────

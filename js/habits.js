@@ -214,6 +214,13 @@ async function deleteHabit(id) {
 
   showToast('Hábito eliminado', async () => {
     if (!_lastDeletedHabit) return;
+    // Remove from permanent deletion blacklist so it can be restored
+    const deletedKey = 'deleted_habits_' + userId;
+    try {
+      const ids = JSON.parse(localStorage.getItem(deletedKey) || '[]');
+      localStorage.setItem(deletedKey, JSON.stringify(ids.filter(x => x !== _lastDeletedHabit.id)));
+    } catch {}
+    _pendingHabitDels.delete(_lastDeletedHabit.id);
     const habits = LOCAL.get('habits');
     habits.push(_lastDeletedHabit);
     LOCAL.set('habits', habits);
