@@ -344,7 +344,7 @@ const IOS_SECTION_TITLES = {
 let _iosCurrentTab = 'dashboard';
 
 function isMobile() {
-  return window.innerWidth <= 768;
+  return true;
 }
 
 // ── Update iOS nav bar title + controls ────────────────

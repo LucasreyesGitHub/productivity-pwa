@@ -1545,21 +1545,15 @@ input::placeholder { color: var(--text-3); }
    iOS MOBILE COMPONENTS  (≤ 768px)
    ════════════════════════════════════════════════════════════ */
 
-/* iOS nav bar and tabbar hidden on desktop */
-.ios-navbar,
-.ios-tabbar,
-.ios-scrim,
-.ios-sheet { display: none; }
+/* ── Hide desktop navigation always ── */
+.sidebar,
+.sidebar-backdrop { display: none !important; }
+.topbar { display: none; }
+.menu-btn { display: none; }
 
-@media (max-width: 768px) {
+/* iOS nav components always visible */
 
-  /* ── Hide desktop navigation ── */
-  .sidebar,
-  .sidebar-backdrop { display: none !important; }
-
-  .topbar { display: none; }
-
-  .menu-btn { display: none; }
+@media (max-width: 9999px) {
 
   /* ── Full-height app ── */
   .app-layout { height: 100dvh; overflow: hidden; }
@@ -1963,7 +1957,47 @@ input::placeholder { color: var(--text-3); }
   /* ─ Empty state on mobile ───────────────────────────── */
   .empty-state { padding: 60px 30px; }
 
-} /* end @media (max-width: 768px) */
+} /* end iOS layout block */
+
+/* ─ Desktop: center the app ─────────────────────────────── */
+@media (min-width: 600px) {
+  body { background: #111; }
+  .app-screen {
+    max-width: 480px;
+    margin: 0 auto;
+    position: relative;
+    min-height: 100dvh;
+    background: var(--bg);
+    box-shadow: 0 0 80px rgba(0,0,0,.6);
+  }
+  .ios-navbar {
+    left: 50% !important; right: auto !important;
+    width: 480px;
+    transform: translateX(-50%);
+  }
+  .ios-tabbar {
+    left: 50% !important; right: auto !important;
+    width: 480px;
+    transform: translateX(-50%);
+    border-radius: 0;
+  }
+  .ios-sheet, #quick-add {
+    max-width: 480px !important;
+    left: 50% !important; right: auto !important;
+    width: 480px !important;
+    transform: translateX(-50%) translateY(110%);
+  }
+  .ios-sheet.show {
+    transform: translateX(-50%) translateY(0) !important;
+  }
+  #quick-add:not([hidden]) {
+    transform: translateX(-50%) translateY(0) !important;
+  }
+  #quick-add[hidden] {
+    transform: translateX(-50%) translateY(110%) !important;
+  }
+  .ios-scrim { max-width: 480px; left: 50%; transform: translateX(-50%); }
+}
 
 /* ─ Extra-small screens ─────────────────────────────────── */
 @media (max-width: 480px) {
