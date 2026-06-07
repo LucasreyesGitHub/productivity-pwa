@@ -326,3 +326,344 @@ async function initApp(uid) {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
 }
+
+// ══════════════════════════════════════════════════════
+//  iOS MOBILE NAVIGATION
+// ══════════════════════════════════════════════════════
+
+const IOS_SECTION_TITLES = {
+  dashboard: 'Inicio',
+  tasks:     'Tareas',
+  habits:    'Hábitos',
+  goals:     'Objetivos',
+  stats:     'Estadísticas',
+  calendar:  'Calendario',
+  ideas:     'Ideas',
+};
+
+let _iosCurrentTab = 'dashboard';
+
+function isMobile() {
+  return window.innerWidth <= 768;
+}
+
+// ── Update iOS nav bar title + controls ────────────────
+function iosUpdateNavbar(section) {
+  const title = IOS_SECTION_TITLES[section] || section;
+
+  const largeTitle    = document.getElementById('ios-large-title');
+  const compactTitle  = document.getElementById('ios-compact-title');
+  const tasksControls = document.getElementById('ios-tasks-controls');
+  const addBtn        = document.getElementById('ios-add-btn');
+  const moreBtn       = document.getElementById('ios-more-btn');
+
+  if (largeTitle)    largeTitle.textContent   = title;
+  if (compactTitle)  compactTitle.textContent  = title;
+
+  const isTasksSection = (section === 'tasks');
+  if (tasksControls) tasksControls.classList.toggle('hidden-controls', !isTasksSection);
+  if (addBtn)  addBtn.style.display  = isTasksSection ? '' : 'none';
+  if (moreBtn) moreBtn.style.display = isTasksSection ? 'none' : '';
+
+  // Recalculate navbar height for content padding
+  requestAnimationFrame(() => {
+    const navbar = document.getElementById('ios-navbar');
+    if (navbar) {
+      document.documentElement.style.setProperty(
+        '--ios-navbar-h', navbar.offsetHeight + 'px'
+      );
+    }
+  });
+
+  // Reset scroll shadow when switching tabs
+  const navbar = document.getElementById('ios-navbar');
+  if (navbar) navbar.classList.remove('scrolled');
+}
+
+// ── Tab bar navigation ─────────────────────────────────
+function iosTabNav(tab) {
+  if (!isMobile()) return;
+
+  _iosCurrentTab = tab;
+
+  // Update tab bar active state
+  document.querySelectorAll('.ios-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.iosTab === tab);
+  });
+
+  // Navigate to section (tasks → inbox by default)
+  if (tab === 'tasks') {
+    setView(currentView || 'inbox');
+  } else if (['dashboard','habits','goals','stats','calendar','ideas'].includes(tab)) {
+    showSection(tab);
+  }
+
+  iosUpdateNavbar(tab === 'tasks' ? 'tasks' : tab);
+
+  // Scroll content to top
+  const contentEl = document.querySelector('.content');
+  if (contentEl) contentEl.scrollTop = 0;
+}
+
+// ── Scrim + sheet management ───────────────────────────
+function iosShowSheet(id) {
+  const scrim = document.getElementById('ios-scrim');
+  const sheet = document.getElementById(id);
+  if (!scrim || !sheet) return;
+  scrim.classList.add('show');
+  sheet.classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+function iosHideSheet() {
+  document.querySelectorAll('.ios-sheet.show').forEach(s => s.classList.remove('show'));
+  const scrim = document.getElementById('ios-scrim');
+  if (scrim) scrim.classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+// ── Segmented control (tasks view) ────────────────────
+function iosInitSegmented() {
+  const seg = document.getElementById('ios-segmented');
+  const thumb = document.getElementById('ios-seg-thumb');
+  if (!seg || !thumb) return;
+
+  function moveThumb(btn) {
+    const sr = seg.getBoundingClientRect();
+    const r  = btn.getBoundingClientRect();
+    thumb.style.width = r.width + 'px';
+    thumb.style.transform = `translateX(${r.left - sr.left - 2}px)`;
+  }
+
+  seg.querySelectorAll('.ios-seg').forEach(btn => {
+    btn.addEventListener('click', () => {
+      seg.querySelectorAll('.ios-seg').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      moveThumb(btn);
+      setView(btn.dataset.iosFilter);
+      // Sync sidebar view
+      currentView = btn.dataset.iosFilter;
+    });
+  });
+
+  requestAnimationFrame(() => {
+    const active = seg.querySelector('.ios-seg.active');
+    if (active) moveThumb(active);
+  });
+}
+
+// Keep segmented control in sync when sidebar nav changes view
+const _origSetView = typeof setView === 'function' ? setView : null;
+
+// ── Sync segmented control when view changes ──────────
+function iosSyncSegmented(view) {
+  const seg = document.getElementById('ios-segmented');
+  if (!seg) return;
+  const btn = seg.querySelector(`[data-ios-filter="${view}"]`);
+  if (btn) {
+    seg.querySelectorAll('.ios-seg').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    // move thumb
+    const thumb = document.getElementById('ios-seg-thumb');
+    if (thumb) {
+      const sr = seg.getBoundingClientRect();
+      const r  = btn.getBoundingClientRect();
+      thumb.style.width = r.width + 'px';
+      thumb.style.transform = `translateX(${r.left - sr.left - 2}px)`;
+    }
+  }
+}
+
+// ── Scroll handler — navbar collapse ──────────────────
+function iosInitScroll() {
+  const contentEl = document.querySelector('.content');
+  const navbar    = document.getElementById('ios-navbar');
+  if (!contentEl || !navbar) return;
+
+  contentEl.addEventListener('scroll', () => {
+    navbar.classList.toggle('scrolled', contentEl.scrollTop > 10);
+  }, { passive: true });
+}
+
+// ── Grab-to-dismiss on ios-more sheet ─────────────────
+function iosInitGrabbers() {
+  const grabber = document.getElementById('ios-more-grabber');
+  const sheet   = document.getElementById('ios-more-sheet');
+  if (!grabber || !sheet) return;
+
+  let sy = 0, dragging = false;
+  grabber.addEventListener('pointerdown', e => {
+    sy = e.clientY; dragging = true;
+    sheet.style.transition = 'none';
+    grabber.setPointerCapture(e.pointerId);
+  });
+  grabber.addEventListener('pointermove', e => {
+    if (!dragging) return;
+    const dy = Math.max(0, e.clientY - sy);
+    sheet.style.transform = `translateY(${dy}px)`;
+  });
+  grabber.addEventListener('pointerup', e => {
+    if (!dragging) return;
+    dragging = false;
+    sheet.style.transition = '';
+    sheet.style.transform = '';
+    if (e.clientY - sy > 100) iosHideSheet();
+  });
+}
+
+// ── iOS Task Swipe gestures ────────────────────────────
+function iosBindSwipe(cardEl) {
+  const id  = cardEl.dataset.id;
+  const row = cardEl.querySelector('.task-card-main');
+  if (!row || !id) return;
+
+  let startX = 0, startY = 0, swipeDX = 0, locked = false, active = false;
+
+  row.addEventListener('pointerdown', e => {
+    startX = e.clientX; startY = e.clientY;
+    active = true; locked = false; swipeDX = 0;
+    row.style.transition = 'none';
+  });
+
+  row.addEventListener('pointermove', e => {
+    if (!active) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    if (!locked) {
+      if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 8) { active = false; row.style.transition = ''; return; }
+      if (Math.abs(dx) > 8) { locked = true; row.setPointerCapture(e.pointerId); }
+      else return;
+    }
+    swipeDX = dx;
+    const clamped = Math.max(-130, Math.min(130, dx));
+    row.style.transform = `translateX(${clamped}px)`;
+  });
+
+  const endSwipe = () => {
+    if (!active) return;
+    active = false;
+    row.style.transition = 'transform .3s var(--ease-ios)';
+    if (swipeDX > 90) {
+      row.style.transform = 'translateX(100%)';
+      setTimeout(() => toggleTask(id), 180);
+    } else if (swipeDX < -90) {
+      row.style.transform = 'translateX(-100%)';
+      setTimeout(() => deleteTask(id), 200);
+    } else {
+      row.style.transform = 'translateX(0)';
+    }
+  };
+
+  row.addEventListener('pointerup',     endSwipe);
+  row.addEventListener('pointercancel', endSwipe);
+}
+
+// ── Init iOS nav ───────────────────────────────────────
+function initIosNav() {
+  if (!isMobile()) return;
+
+  // Tab bar clicks
+  document.querySelectorAll('.ios-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const t = tab.dataset.iosTab;
+      if (t === 'more') {
+        iosShowSheet('ios-more-sheet');
+        // Update user email in sheet
+        const emailEl = document.getElementById('ios-user-email');
+        const mainEmailEl = document.getElementById('user-email-label');
+        if (emailEl && mainEmailEl) emailEl.textContent = mainEmailEl.textContent;
+        // Sync sync-dot
+        const mainDot = document.getElementById('sync-dot');
+        const iosDot  = document.getElementById('ios-sync-dot');
+        if (mainDot && iosDot) iosDot.className = mainDot.className;
+      } else {
+        iosTabNav(t);
+      }
+    });
+  });
+
+  // + button (new task on tasks view)
+  document.getElementById('ios-add-btn')?.addEventListener('click', openQuickAdd);
+
+  // More button (non-task sections → show more sheet)
+  document.getElementById('ios-more-btn')?.addEventListener('click', () => {
+    iosShowSheet('ios-more-sheet');
+    const emailEl   = document.getElementById('ios-user-email');
+    const mainEmail = document.getElementById('user-email-label');
+    if (emailEl && mainEmail) emailEl.textContent = mainEmail.textContent;
+  });
+
+  // Scrim tap → dismiss
+  document.getElementById('ios-scrim')?.addEventListener('click', iosHideSheet);
+
+  // Segmented control
+  iosInitSegmented();
+
+  // Scroll shadow
+  iosInitScroll();
+
+  // Grab-to-dismiss
+  iosInitGrabbers();
+
+  // Set initial navbar height CSS var
+  requestAnimationFrame(() => {
+    const navbar = document.getElementById('ios-navbar');
+    if (navbar) {
+      document.documentElement.style.setProperty('--ios-navbar-h', navbar.offsetHeight + 'px');
+    }
+  });
+
+  // Search
+  document.getElementById('ios-search-input')?.addEventListener('input', e => {
+    const q = e.target.value.trim().toLowerCase();
+    document.querySelectorAll('.task-card').forEach(card => {
+      const title = card.querySelector('.task-card-title')?.textContent?.toLowerCase() || '';
+      card.style.display = (!q || title.includes(q)) ? '' : 'none';
+    });
+  });
+}
+
+// ── Patch showSection to update iOS nav ───────────────
+{
+  const _orig = showSection;
+  showSection = function(name) {
+    _orig(name);
+    if (isMobile()) {
+      iosUpdateNavbar(name);
+      const tabMap = { dashboard:'dashboard', tasks:'tasks', habits:'habits', goals:'goals', stats:'more', calendar:'more', ideas:'more' };
+      const tabKey = tabMap[name] || 'more';
+      document.querySelectorAll('.ios-tab').forEach(t => t.classList.toggle('active', t.dataset.iosTab === tabKey));
+    }
+  };
+}
+
+// ── Patch setView to sync segmented control ───────────
+{
+  const _orig = setView;
+  setView = function(view) {
+    _orig(view);
+    if (isMobile()) {
+      iosUpdateNavbar('tasks');
+      document.querySelectorAll('.ios-tab').forEach(t => t.classList.toggle('active', t.dataset.iosTab === 'tasks'));
+      iosSyncSegmented(view);
+    }
+  };
+}
+
+// ── Bind swipe after tasks render ─────────────────────
+document.addEventListener('tasksRendered', () => {
+  if (!isMobile()) return;
+  document.querySelectorAll('.task-card').forEach(iosBindSwipe);
+});
+
+// ── Patch initApp to init iOS nav ─────────────────────
+{
+  const _orig = initApp;
+  initApp = async function(uid) {
+    await _orig(uid);
+    if (isMobile()) {
+      initIosNav();
+      iosUpdateNavbar('dashboard');
+    }
+  };
+}

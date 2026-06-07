@@ -551,6 +551,9 @@ async function renderTasks() {
       </div>`;
   }).join('');
 
+  // Notify iOS nav to bind swipe gestures
+  document.dispatchEvent(new CustomEvent('tasksRendered'));
+
   // ── Drag-to-reorder (desktop + touch) ─────────────────
   list.querySelectorAll('.task-card').forEach(el => {
     const handle = el.querySelector('.drag-handle');
