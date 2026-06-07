@@ -240,13 +240,28 @@ async function dbDeleteHabitCompletion(id) {
 }
 
 // ── GOALS ───────────────────────────────────────────────
+function _getDeletedGoalIds() {
+  try { return JSON.parse(localStorage.getItem('deleted_goals_' + userId) || '[]'); }
+  catch { return []; }
+}
+function _addDeletedGoalId(id) {
+  const ids = _getDeletedGoalIds();
+  if (!ids.includes(id)) {
+    ids.push(id);
+    if (ids.length > 200) ids.shift();
+    localStorage.setItem('deleted_goals_' + userId, JSON.stringify(ids));
+  }
+}
+
 async function dbGetGoals() {
   if (!isOnline) return LOCAL.get('goals');
   try {
     const { data, error } = await sb.from('goals').select('*').eq('user_id', userId).order('created_at', { ascending: false });
     if (error) throw error;
-    LOCAL.set('goals', data);
-    return data;
+    const deletedIds = _getDeletedGoalIds();
+    const filtered = data.filter(g => !deletedIds.includes(g.id));
+    LOCAL.set('goals', filtered);
+    return filtered;
   } catch { return LOCAL.get('goals'); }
 }
 
@@ -278,6 +293,7 @@ async function dbUpdateGoal(id, changes) {
 }
 
 async function dbDeleteGoal(id) {
+  _addDeletedGoalId(id);
   LOCAL.set('milestones', LOCAL.get('milestones').filter(m => m.goal_id !== id));
   LOCAL.set('goals', LOCAL.get('goals').filter(g => g.id !== id));
   if (isOnline) {

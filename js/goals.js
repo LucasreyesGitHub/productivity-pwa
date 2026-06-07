@@ -210,11 +210,44 @@ function openUpdateProgress(goalId) {
 }
 
 // ── CRUD ─────────────────────────────────────────────
+let _lastDeletedGoal = null;
+let _lastDeletedGoalMilestones = [];
+
 async function deleteGoal(id) {
-  if (!confirm('¿Eliminar este objetivo y todos sus hitos?')) return;
+  _lastDeletedGoal = LOCAL.get('goals').find(g => g.id === id);
+  _lastDeletedGoalMilestones = LOCAL.get('milestones').filter(m => m.goal_id === id);
+
   await dbDeleteGoal(id);
   renderGoals();
   renderDashboard();
+
+  showToast('Objetivo eliminado', async () => {
+    if (!_lastDeletedGoal) return;
+    // Remove from blacklist so it can be restored
+    try {
+      const key = 'deleted_goals_' + userId;
+      const ids = JSON.parse(localStorage.getItem(key) || '[]');
+      localStorage.setItem(key, JSON.stringify(ids.filter(x => x !== _lastDeletedGoal.id)));
+    } catch {}
+    // Restore locally
+    const goals = LOCAL.get('goals');
+    goals.unshift(_lastDeletedGoal);
+    LOCAL.set('goals', goals);
+    const milestones = LOCAL.get('milestones');
+    _lastDeletedGoalMilestones.forEach(m => { if (!milestones.find(x => x.id === m.id)) milestones.push(m); });
+    LOCAL.set('milestones', milestones);
+    // Restore in Supabase
+    if (isOnline) {
+      sb.from('goals').insert({ ..._lastDeletedGoal }).catch(() => {});
+      if (_lastDeletedGoalMilestones.length) {
+        sb.from('milestones').insert(_lastDeletedGoalMilestones).catch(() => {});
+      }
+    }
+    _lastDeletedGoal = null;
+    _lastDeletedGoalMilestones = [];
+    renderGoals();
+    renderDashboard();
+  });
 }
 
 // ── Goal modal ────────────────────────────────────────
