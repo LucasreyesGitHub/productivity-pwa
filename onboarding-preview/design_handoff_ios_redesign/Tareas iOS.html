@@ -1,0 +1,1491 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tareas · iOS</title>
+<style>
+/* ============================================================
+   TAREAS — Rediseño iOS nativo
+   HTML + CSS + JS puro · iOS Human Interface Guidelines
+   ============================================================ */
+
+*, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  --ease-ios: cubic-bezier(.32, .72, 0, 1);
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+          "Helvetica Neue", "Segoe UI", system-ui, sans-serif;
+}
+
+html, body {
+  margin: 0;
+  height: 100%;
+  font-family: var(--font);
+  background:
+    radial-gradient(120% 80% at 50% -10%, #2a2a32 0%, #161619 45%, #0c0c0e 100%);
+  overflow: hidden;
+}
+
+/* ----- Stage (centra y escala el iPhone) ----- */
+.stage {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+.fit { position: relative; }
+
+/* =====================  IPHONE FRAME  ===================== */
+.device {
+  --w: 393px;
+  --h: 852px;
+  --radius: 56px;
+
+  /* iOS color system — DARK por defecto */
+  --accent: #0A84FF;
+  --bg: #000000;
+  --bg-elev: #1c1c1e;
+  --cell: #1c1c1e;
+  --cell-press: #2c2c2e;
+  --grouped: #000000;
+  --label: #ffffff;
+  --label-2: rgba(235,235,245,.6);
+  --label-3: rgba(235,235,245,.3);
+  --separator: rgba(84,84,88,.55);
+  --fill: rgba(118,118,128,.24);
+  --fill-2: rgba(118,118,128,.16);
+  --material: rgba(28,28,30,.72);
+  --material-tab: rgba(20,20,22,.78);
+  --red: #FF453A;
+  --green: #30D158;
+  --orange: #FF9F0A;
+  --yellow: #FFD60A;
+  --shadow: 0 1px 0 rgba(255,255,255,.02);
+
+  position: relative;
+  width: var(--w);
+  height: var(--h);
+  border-radius: var(--radius);
+  background: #000;
+  padding: 4px;
+  box-shadow:
+    0 0 0 4px #1b1b1d,
+    0 0 0 6px #2c2c2e,
+    0 0 0 7px #0a0a0a,
+    0 50px 90px -20px rgba(0,0,0,.8),
+    0 30px 60px -30px rgba(0,0,0,.9);
+}
+
+.device[data-theme="light"] {
+  --bg: #f2f2f7;
+  --bg-elev: #ffffff;
+  --cell: #ffffff;
+  --cell-press: #e5e5ea;
+  --grouped: #f2f2f7;
+  --label: #000000;
+  --label-2: rgba(60,60,67,.6);
+  --label-3: rgba(60,60,67,.3);
+  --separator: rgba(60,60,67,.29);
+  --fill: rgba(118,118,128,.12);
+  --fill-2: rgba(118,118,128,.08);
+  --material: rgba(249,249,251,.78);
+  --material-tab: rgba(248,248,250,.82);
+  --red: #FF3B30;
+  --green: #34C759;
+  --orange: #FF9500;
+  --yellow: #FFCC00;
+}
+
+/* ----- Screen ----- */
+.screen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 52px;
+  overflow: hidden;
+  background: var(--bg);
+  transition: background .4s var(--ease-ios);
+  isolation: isolate;
+}
+
+/* ----- Dynamic Island ----- */
+.island {
+  position: absolute;
+  top: 11px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 124px;
+  height: 36px;
+  background: #000;
+  border-radius: 20px;
+  z-index: 100;
+  pointer-events: none;
+}
+
+/* ----- Status bar ----- */
+.statusbar {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 54px;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 32px 0;
+  color: var(--label);
+  font-weight: 600;
+  font-size: 16px;
+  pointer-events: none;
+  transition: color .4s var(--ease-ios);
+}
+.statusbar .time { letter-spacing: .3px; font-variant-numeric: tabular-nums; }
+.statusbar .right { display: flex; align-items: center; gap: 7px; }
+.statusbar svg { display: block; }
+
+/* =====================  APP  ===================== */
+.app {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ----- Nav bar (translúcida) ----- */
+.navbar {
+  position: relative;
+  z-index: 40;
+  flex: none;
+  padding-top: 54px;
+  background: var(--material);
+  -webkit-backdrop-filter: saturate(180%) blur(22px);
+  backdrop-filter: saturate(180%) blur(22px);
+  border-bottom: .5px solid transparent;
+  transition: background .4s var(--ease-ios), border-color .2s linear;
+}
+.navbar.scrolled { border-bottom-color: var(--separator); }
+
+.navbar-top {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px 0 16px;
+}
+.navbar-compact-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--label);
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity .2s, transform .2s;
+}
+.navbar.scrolled .navbar-compact-title { opacity: 1; transform: none; }
+
+.nav-actions { display: flex; align-items: center; gap: 2px; }
+.icon-btn {
+  width: 44px; height: 44px;
+  display: grid; place-items: center;
+  border: none; background: none;
+  color: var(--accent);
+  cursor: pointer;
+  border-radius: 50%;
+  transition: background .15s, transform .1s;
+}
+.icon-btn:active { background: var(--fill); transform: scale(.92); }
+.icon-btn svg { width: 24px; height: 24px; }
+.icon-btn.avatar { color: var(--label-2); }
+
+.large-title {
+  padding: 0 16px 8px;
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: .37px;
+  color: var(--label);
+  line-height: 1.1;
+}
+
+/* ----- Search field ----- */
+.search {
+  padding: 2px 16px 10px;
+}
+.search-field {
+  height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  background: var(--fill);
+  border-radius: 10px;
+  color: var(--label-2);
+  font-size: 17px;
+}
+.search-field svg { width: 18px; height: 18px; flex: none; }
+
+/* ----- Segmented control (scope) ----- */
+.segmented {
+  display: flex;
+  gap: 0;
+  margin: 0 16px 10px;
+  padding: 2px;
+  background: var(--fill-2);
+  border-radius: 9px;
+  position: relative;
+}
+.seg {
+  flex: 1;
+  border: none;
+  background: none;
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--label);
+  padding: 6px 4px;
+  border-radius: 7px;
+  cursor: pointer;
+  position: relative;
+  z-index: 2;
+  transition: color .2s;
+  white-space: nowrap;
+}
+.seg:not(.active) { color: var(--label-2); font-weight: 500; }
+.seg-thumb {
+  position: absolute;
+  top: 2px; bottom: 2px;
+  background: var(--cell);
+  border-radius: 7px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.18), 0 1px 1px rgba(0,0,0,.1);
+  transition: transform .28s var(--ease-ios), width .28s var(--ease-ios);
+  z-index: 1;
+}
+.device[data-theme="dark"] .seg-thumb { background: #636366; }
+
+/* ----- Content scroll ----- */
+.content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 120px;
+  scrollbar-width: none;
+}
+.content::-webkit-scrollbar { display: none; }
+
+/* ----- Section header ----- */
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 7px;
+}
+.section-head h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: .35px;
+  color: var(--label);
+}
+.section-head .count {
+  font-size: 17px;
+  color: var(--label-3);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ----- Grouped list (inset) ----- */
+.list {
+  margin: 0 16px;
+  background: var(--cell);
+  border-radius: 12px;
+  overflow: hidden;
+  list-style: none;
+  padding: 0;
+}
+
+/* ----- Task row + swipe ----- */
+.task {
+  position: relative;
+  overflow: hidden;
+}
+.task-actions {
+  position: absolute;
+  top: 0; bottom: 0;
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+}
+.task-actions.left {
+  left: 0; right: 0;
+  background: var(--green);
+  justify-content: flex-start;
+  padding-left: 22px;
+}
+.task-actions.right {
+  left: 0; right: 0;
+  background: var(--red);
+  justify-content: flex-end;
+  padding-right: 22px;
+}
+.task-actions svg { width: 22px; height: 22px; }
+.task-actions span { display: inline-flex; align-items: center; gap: 7px; }
+
+.task-row {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 16px 11px 16px;
+  background: var(--cell);
+  cursor: pointer;
+  touch-action: pan-y;
+  transition: background .12s;
+}
+.task-row:active { background: var(--cell-press); }
+.task:not(:last-child) .task-row::after {
+  content: "";
+  position: absolute;
+  left: 52px; right: 0; bottom: 0;
+  height: .5px;
+  background: var(--separator);
+}
+
+/* checkbox */
+.check {
+  flex: none;
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  border: 2px solid var(--label-3);
+  background: none;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: border-color .2s, background .2s, transform .15s;
+}
+.check svg { width: 15px; height: 15px; color: #fff; opacity: 0; transform: scale(.5); transition: opacity .2s, transform .2s var(--ease-ios); }
+.task.done .check { background: var(--accent); border-color: var(--accent); }
+.task.done .check svg { opacity: 1; transform: none; }
+.check:active { transform: scale(.85); }
+
+.task-main { flex: 1; min-width: 0; }
+.task-title {
+  font-size: 17px;
+  color: var(--label);
+  line-height: 1.3;
+  letter-spacing: -.2px;
+  transition: color .2s;
+}
+.task.done .task-title { color: var(--label-3); text-decoration: line-through; }
+.task-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 3px;
+  font-size: 13px;
+  color: var(--label-2);
+}
+.task-meta .dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.task-meta .sep { color: var(--label-3); }
+.task-meta .overdue { color: var(--red); }
+.dot.alta { background: var(--red); }
+.dot.media { background: var(--orange); }
+.dot.baja { background: var(--green); }
+
+.cat-ic {
+  flex: none;
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  display: grid; place-items: center;
+  color: #fff;
+}
+.cat-ic svg { width: 17px; height: 17px; }
+.flag { flex: none; color: var(--orange); width: 16px; height: 16px; }
+
+/* ----- empty state ----- */
+.empty {
+  text-align: center;
+  padding: 60px 30px;
+  color: var(--label-3);
+}
+.empty svg { width: 56px; height: 56px; margin-bottom: 14px; color: var(--label-3); }
+.empty h3 { margin: 0 0 4px; font-size: 19px; color: var(--label-2); font-weight: 600; }
+.empty p { margin: 0; font-size: 15px; }
+
+/* =====================  TAB BAR  ===================== */
+.tabbar {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  z-index: 50;
+  height: 83px;
+  padding: 6px 0 22px;
+  display: flex;
+  background: var(--material-tab);
+  -webkit-backdrop-filter: saturate(180%) blur(22px);
+  backdrop-filter: saturate(180%) blur(22px);
+  border-top: .5px solid var(--separator);
+  transition: background .4s var(--ease-ios);
+}
+.tab {
+  flex: 1;
+  border: none; background: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding-top: 5px;
+  color: var(--label-3);
+  cursor: pointer;
+  font-family: var(--font);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: .1px;
+  transition: color .15s;
+}
+.tab svg { width: 25px; height: 25px; }
+.tab.active { color: var(--accent); }
+.tab:active { opacity: .6; }
+
+/* ----- FAB (sin asignar a tab) ----- */
+
+/* =====================  SHEETS  ===================== */
+.scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 80;
+  background: rgba(0,0,0,.4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .35s var(--ease-ios);
+}
+.scrim.show { opacity: 1; pointer-events: auto; }
+
+.sheet {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  z-index: 90;
+  background: var(--bg-elev);
+  border-radius: 14px 14px 0 0;
+  transform: translateY(110%);
+  transition: transform .42s var(--ease-ios);
+  max-height: 92%;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 -8px 40px rgba(0,0,0,.4);
+  will-change: transform;
+}
+.device[data-theme="dark"] .sheet { background: #1c1c1e; }
+.sheet.show { transform: translateY(0); }
+
+.grabber {
+  width: 36px; height: 5px;
+  border-radius: 3px;
+  background: var(--label-3);
+  margin: 6px auto 0;
+  flex: none;
+  cursor: grab;
+}
+
+.sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px 8px;
+  flex: none;
+}
+.sheet-head .title { font-size: 17px; font-weight: 600; color: var(--label); }
+.sheet-btn {
+  border: none; background: none;
+  font-family: var(--font);
+  font-size: 17px;
+  color: var(--accent);
+  cursor: pointer;
+  padding: 4px 0;
+  min-width: 64px;
+}
+.sheet-btn.cancel { text-align: left; }
+.sheet-btn.primary { text-align: right; font-weight: 600; }
+.sheet-btn:disabled { color: var(--label-3); cursor: default; }
+.sheet-btn:active:not(:disabled) { opacity: .5; }
+
+.sheet-body {
+  overflow-y: auto;
+  padding: 6px 16px 28px;
+  scrollbar-width: none;
+}
+.sheet-body::-webkit-scrollbar { display: none; }
+
+/* big text inputs */
+.field-big {
+  width: 100%;
+  border: none;
+  background: var(--cell);
+  color: var(--label);
+  font-family: var(--font);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -.3px;
+  padding: 14px 16px;
+  border-radius: 12px 12px 0 0;
+  outline: none;
+}
+.field-notes {
+  width: 100%;
+  border: none;
+  background: var(--cell);
+  color: var(--label);
+  font-family: var(--font);
+  font-size: 17px;
+  padding: 0 16px 14px;
+  border-radius: 0 0 12px 12px;
+  outline: none;
+  resize: none;
+  min-height: 44px;
+  line-height: 1.35;
+}
+.field-big::placeholder, .field-notes::placeholder { color: var(--label-3); font-weight: 400; }
+.field-group { margin-bottom: 22px; }
+.field-big.solo { border-radius: 12px; }
+
+/* inset rows in sheet */
+.sheet-list {
+  background: var(--cell);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 22px;
+}
+.sheet-list-label {
+  font-size: 13px;
+  color: var(--label-2);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  font-weight: 600;
+  padding: 0 16px 7px 16px;
+}
+.srow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 8px 16px;
+  position: relative;
+}
+.srow:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: 52px; right: 0; bottom: 0;
+  height: .5px;
+  background: var(--separator);
+}
+.srow .srow-ic {
+  width: 29px; height: 29px;
+  border-radius: 7px;
+  display: grid; place-items: center;
+  color: #fff;
+  flex: none;
+}
+.srow .srow-ic svg { width: 17px; height: 17px; }
+.srow .srow-label { font-size: 17px; color: var(--label); flex: 1; }
+.srow .srow-value { font-size: 17px; color: var(--label-2); display: flex; align-items: center; gap: 6px; }
+.srow .chev { color: var(--label-3); width: 18px; height: 18px; }
+
+/* priority segmented in sheet */
+.prio-seg {
+  display: flex;
+  gap: 8px;
+  padding: 10px 16px;
+}
+.prio-opt {
+  flex: 1;
+  border: 1.5px solid var(--separator);
+  background: none;
+  border-radius: 10px;
+  padding: 9px 4px;
+  font-family: var(--font);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--label-2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  transition: all .18s;
+}
+.prio-opt .pd { width: 9px; height: 9px; border-radius: 50%; }
+.prio-opt.sel { color: var(--label); font-weight: 600; border-color: transparent; }
+.prio-opt.sel.alta { background: color-mix(in srgb, var(--red) 16%, transparent); border-color: var(--red); }
+.prio-opt.sel.media { background: color-mix(in srgb, var(--orange) 16%, transparent); border-color: var(--orange); }
+.prio-opt.sel.baja { background: color-mix(in srgb, var(--green) 16%, transparent); border-color: var(--green); }
+
+/* category chips */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 16px; }
+.chip {
+  border: 1.5px solid var(--separator);
+  background: none;
+  border-radius: 20px;
+  padding: 7px 14px;
+  font-family: var(--font);
+  font-size: 15px;
+  color: var(--label-2);
+  cursor: pointer;
+  display: flex; align-items: center; gap: 7px;
+  transition: all .15s;
+}
+.chip .cd { width: 9px; height: 9px; border-radius: 50%; }
+.chip.sel { color: #fff; border-color: transparent; font-weight: 600; }
+
+/* subtasks */
+.subtask {
+  display: flex; align-items: center; gap: 11px;
+  padding: 9px 16px;
+  position: relative;
+}
+.subtask:not(:last-child)::after {
+  content: ""; position: absolute; left: 43px; right: 0; bottom: 0; height: .5px; background: var(--separator);
+}
+.subtask .mini-check {
+  width: 20px; height: 20px; border-radius: 50%;
+  border: 2px solid var(--label-3); flex: none;
+  display: grid; place-items: center; cursor: pointer;
+}
+.subtask.done .mini-check { background: var(--accent); border-color: var(--accent); }
+.subtask .mini-check svg { width: 12px; height: 12px; color: #fff; opacity: 0; }
+.subtask.done .mini-check svg { opacity: 1; }
+.subtask span { font-size: 16px; color: var(--label); flex: 1; }
+.subtask.done span { color: var(--label-3); text-decoration: line-through; }
+.subtask input {
+  border: none; background: none; outline: none;
+  font-family: var(--font); font-size: 16px; color: var(--label); flex: 1;
+}
+.subtask input::placeholder { color: var(--label-3); }
+.add-sub { color: var(--accent); }
+
+/* toggle */
+.ios-toggle {
+  width: 51px; height: 31px;
+  border-radius: 16px;
+  background: var(--fill);
+  border: none;
+  position: relative;
+  cursor: pointer;
+  transition: background .25s var(--ease-ios);
+  flex: none;
+}
+.ios-toggle::after {
+  content: "";
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 27px; height: 27px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 5px rgba(0,0,0,.25);
+  transition: transform .25s var(--ease-ios);
+}
+.ios-toggle.on { background: var(--green); }
+.ios-toggle.on::after { transform: translateX(20px); }
+
+/* big primary button */
+.btn-primary {
+  width: 100%;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font-family: var(--font);
+  font-size: 17px;
+  font-weight: 600;
+  padding: 15px;
+  border-radius: 13px;
+  cursor: pointer;
+  transition: opacity .15s, transform .1s;
+}
+.btn-primary:active { opacity: .85; transform: scale(.985); }
+.btn-primary:disabled { background: var(--fill); color: var(--label-3); cursor: default; }
+
+/* ----- Appearance sheet ----- */
+.appear-grid { display: flex; gap: 12px; margin: 4px 0 24px; }
+.appear-card {
+  flex: 1;
+  border: 2px solid var(--separator);
+  border-radius: 14px;
+  padding: 12px;
+  cursor: pointer;
+  background: none;
+  font-family: var(--font);
+  transition: border-color .2s;
+}
+.appear-card.sel { border-color: var(--accent); }
+.appear-preview {
+  height: 70px;
+  border-radius: 9px;
+  margin-bottom: 9px;
+  display: flex; flex-direction: column; gap: 5px;
+  padding: 9px;
+  justify-content: center;
+}
+.appear-preview .pl { height: 7px; border-radius: 4px; }
+.appear-card .lbl { font-size: 14px; font-weight: 600; color: var(--label); }
+.preview-light { background: #f2f2f7; }
+.preview-light .pl { background: #c7c7cc; }
+.preview-light .pl:first-child { background: #1c1c1e; width: 60%; }
+.preview-dark { background: #1c1c1e; }
+.preview-dark .pl { background: #48484a; }
+.preview-dark .pl:first-child { background: #fff; width: 60%; }
+
+.accent-row { display: flex; gap: 16px; padding: 4px 0 8px; justify-content: center; }
+.accent-dot {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 3px solid transparent;
+  display: grid; place-items: center;
+  transition: transform .12s;
+}
+.accent-dot:active { transform: scale(.9); }
+.accent-dot.sel { border-color: var(--label-3); }
+.accent-dot svg { width: 18px; height: 18px; color: #fff; opacity: 0; }
+.accent-dot.sel svg { opacity: 1; }
+
+/* detail sheet specifics */
+.detail-title { font-size: 24px; font-weight: 700; color: var(--label); letter-spacing: -.4px; line-height: 1.2; margin: 4px 0 14px; }
+.detail-pill {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: 14px; font-weight: 600;
+  padding: 7px 13px; border-radius: 20px;
+  background: var(--fill); color: var(--label);
+}
+.detail-pill .pd { width: 9px; height: 9px; border-radius: 50%; }
+.detail-pills { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+
+.toast {
+  position: absolute;
+  left: 50%; bottom: 100px;
+  transform: translate(-50%, 20px);
+  background: rgba(40,40,42,.96);
+  color: #fff;
+  font-size: 14px; font-weight: 500;
+  padding: 11px 18px;
+  border-radius: 22px;
+  z-index: 95;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .3s, transform .3s var(--ease-ios);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  display: flex; align-items: center; gap: 8px;
+}
+.toast svg { width: 18px; height: 18px; color: var(--green); }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+.hint {
+  text-align: center;
+  margin-top: 18px;
+  color: rgba(255,255,255,.35);
+  font-size: 13px;
+  font-family: var(--font);
+  letter-spacing: .2px;
+}
+.hint b { color: rgba(255,255,255,.6); font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="stage">
+ <div class="fit" id="fit">
+  <div class="device" data-theme="dark" id="device">
+    <div class="screen" id="screen">
+      <div class="island"></div>
+
+      <!-- STATUS BAR -->
+      <div class="statusbar">
+        <span class="time">9:41</span>
+        <span class="right">
+          <!-- cellular -->
+          <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5" width="3" height="7" rx="1"/><rect x="10" y="2.5" width="3" height="9.5" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>
+          <!-- wifi -->
+          <svg width="17" height="12" viewBox="0 0 17 12" fill="currentColor"><path d="M8.5 2.2c2.6 0 5 1 6.8 2.7.3.3.8.3 1.1 0 .3-.3.3-.8 0-1.1C14.3 1.7 11.5.5 8.5.5S2.7 1.7.6 3.8c-.3.3-.3.8 0 1.1.3.3.8.3 1.1 0C3.5 3.2 5.9 2.2 8.5 2.2zm0 3.3c1.5 0 2.9.6 4 1.6.3.3.8.3 1.1 0 .3-.3.3-.8 0-1.1-1.3-1.3-3.2-2.1-5.1-2.1S4.7 4.7 3.4 6c-.3.3-.3.8 0 1.1.3.3.8.3 1.1 0 1.1-1 2.5-1.6 4-1.6zm0 3.2c.8 0 1.5.3 2 .9.3.3.8.3 1.1-.1.3-.3.2-.7-.1-1-.8-.8-1.9-1.2-3-1.2s-2.2.4-3 1.2c-.3.3-.3.7-.1 1 .3.3.8.4 1.1.1.6-.5 1.3-.9 2.1-.9z"/></svg>
+          <!-- battery -->
+          <svg width="27" height="13" viewBox="0 0 27 13" fill="none"><rect x="1" y="1" width="22" height="11" rx="3.5" stroke="currentColor" stroke-opacity=".4" stroke-width="1"/><rect x="2.5" y="2.5" width="19" height="8" rx="2" fill="currentColor"/><path d="M25 4.5v4c.9-.4.9-3.6 0-4z" fill="currentColor" fill-opacity=".5"/></svg>
+        </span>
+      </div>
+
+      <!-- APP -->
+      <div class="app">
+        <!-- NAV BAR -->
+        <header class="navbar" id="navbar">
+          <div class="navbar-top">
+            <span class="navbar-compact-title">Tareas</span>
+            <div class="nav-actions">
+              <button class="icon-btn avatar" id="appearBtn" aria-label="Apariencia">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.39 5.39 0 0 1-4.4 2.26 5.4 5.4 0 0 1-5.4-5.4c0-1.81.89-3.41 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/></svg>
+              </button>
+              <button class="icon-btn" id="newBtnTop" aria-label="Nueva tarea">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+              </button>
+            </div>
+          </div>
+          <h1 class="large-title">Tareas</h1>
+          <div class="search">
+            <div class="search-field">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
+              <span>Buscar</span>
+            </div>
+          </div>
+          <div class="segmented" id="segmented">
+            <div class="seg-thumb" id="segThumb"></div>
+            <button class="seg active" data-filter="todas">Todas</button>
+            <button class="seg" data-filter="hoy">Hoy</button>
+            <button class="seg" data-filter="proximas">Próximas</button>
+            <button class="seg" data-filter="vencidas">Vencidas</button>
+          </div>
+        </header>
+
+        <!-- CONTENT -->
+        <main class="content" id="content"></main>
+
+        <!-- TAB BAR -->
+        <nav class="tabbar">
+          <button class="tab" data-tab="inicio">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20h5v-6h4v6h5V9.5"/></svg>
+            Inicio
+          </button>
+          <button class="tab active" data-tab="tareas">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h12M8 12h12M8 18h12"/><path d="m3 6 1.2 1.2L6.5 5"/><path d="m3 12 1.2 1.2L6.5 11"/><path d="m3 18 1.2 1.2L6.5 17"/></svg>
+            Tareas
+          </button>
+          <button class="tab" data-tab="habitos">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2.1a8 8 0 0 1-1 11.4c-2 1.7-2.5 3.3-2.5 5.5"/><path d="M7 21.9a8 8 0 0 1 1-11.4c2-1.7 2.5-3.3 2.5-5.5"/></svg>
+            Hábitos
+          </button>
+          <button class="tab" data-tab="objetivos">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/></svg>
+            Objetivos
+          </button>
+          <button class="tab" data-tab="mas">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>
+            Más
+          </button>
+        </nav>
+      </div>
+
+      <!-- TOAST -->
+      <div class="toast" id="toast">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 6"/></svg>
+        <span id="toastMsg">Tarea agregada</span>
+      </div>
+
+      <!-- SCRIM + SHEETS -->
+      <div class="scrim" id="scrim"></div>
+
+      <!-- NEW TASK SHEET -->
+      <div class="sheet" id="newSheet">
+        <div class="grabber" data-drag="newSheet"></div>
+        <div class="sheet-head">
+          <button class="sheet-btn cancel" id="cancelNew">Cancelar</button>
+          <span class="title">Nueva tarea</span>
+          <button class="sheet-btn primary" id="saveNew" disabled>Agregar</button>
+        </div>
+        <div class="sheet-body">
+          <div class="field-group">
+            <input class="field-big" id="taskTitle" placeholder="¿Qué necesitas hacer?" autocomplete="off">
+            <textarea class="field-notes" id="taskNotes" placeholder="Notas" rows="1"></textarea>
+          </div>
+
+          <div class="sheet-list">
+            <div class="prio-seg" id="prioSeg">
+              <button class="prio-opt baja" data-prio="baja"><span class="pd" style="background:var(--green)"></span>Baja</button>
+              <button class="prio-opt media sel" data-prio="media"><span class="pd" style="background:var(--orange)"></span>Media</button>
+              <button class="prio-opt alta" data-prio="alta"><span class="pd" style="background:var(--red)"></span>Alta</button>
+            </div>
+          </div>
+
+          <div class="sheet-list-label">Categoría</div>
+          <div class="sheet-list">
+            <div class="chips" id="catChips"></div>
+          </div>
+
+          <div class="sheet-list">
+            <div class="srow">
+              <div class="srow-ic" style="background:var(--red)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4.5" width="18" height="17" rx="3"/><path d="M3 9h18M8 2.5v4M16 2.5v4" stroke-linecap="round"/></svg>
+              </div>
+              <span class="srow-label">Fecha</span>
+              <span class="srow-value">Hoy <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></span>
+            </div>
+            <div class="srow">
+              <div class="srow-ic" style="background:var(--orange)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 7v5l3 2"/><circle cx="12" cy="12" r="8"/></svg>
+              </div>
+              <span class="srow-label">Recordatorio</span>
+              <button class="ios-toggle" id="reminderToggle"></button>
+            </div>
+            <div class="srow">
+              <div class="srow-ic" style="background:#8E8E93">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M17 2.1a8 8 0 0 1-1 11.4c-2 1.7-2.5 3.3-2.5 5.5M7 21.9a8 8 0 0 1 1-11.4"/></svg>
+              </div>
+              <span class="srow-label">Tarea persistente</span>
+              <button class="ios-toggle" id="persistToggle"></button>
+            </div>
+          </div>
+
+          <div class="sheet-list-label">Subtareas</div>
+          <div class="sheet-list" id="subList">
+            <div class="subtask add-sub" id="addSubRow">
+              <div class="mini-check" style="border-color:var(--accent);border-style:dashed">
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" style="opacity:1"><path d="M12 5v14M5 12h14"/></svg>
+              </div>
+              <span style="color:var(--accent)">Agregar subtarea</span>
+            </div>
+          </div>
+
+          <button class="btn-primary" id="saveNewBig" disabled>Agregar tarea</button>
+        </div>
+      </div>
+
+      <!-- APPEARANCE SHEET -->
+      <div class="sheet" id="appearSheet">
+        <div class="grabber" data-drag="appearSheet"></div>
+        <div class="sheet-head">
+          <button class="sheet-btn cancel" style="opacity:0;pointer-events:none">Cerrar</button>
+          <span class="title">Apariencia</span>
+          <button class="sheet-btn primary" id="closeAppear">Listo</button>
+        </div>
+        <div class="sheet-body">
+          <div class="sheet-list-label">Tema</div>
+          <div class="appear-grid" id="themeGrid">
+            <button class="appear-card" data-theme-pick="light">
+              <div class="appear-preview preview-light"><div class="pl"></div><div class="pl"></div><div class="pl" style="width:80%"></div></div>
+              <span class="lbl">Claro</span>
+            </button>
+            <button class="appear-card sel" data-theme-pick="dark">
+              <div class="appear-preview preview-dark"><div class="pl"></div><div class="pl"></div><div class="pl" style="width:80%"></div></div>
+              <span class="lbl">Oscuro</span>
+            </button>
+          </div>
+          <div class="sheet-list-label">Color de acento</div>
+          <div class="accent-row" id="accentRow"></div>
+        </div>
+      </div>
+
+      <!-- DETAIL SHEET -->
+      <div class="sheet" id="detailSheet">
+        <div class="grabber" data-drag="detailSheet"></div>
+        <div class="sheet-head">
+          <button class="sheet-btn cancel" id="closeDetail">Cerrar</button>
+          <span class="title">Detalle</span>
+          <button class="sheet-btn primary" id="editDetail">Editar</button>
+        </div>
+        <div class="sheet-body" id="detailBody"></div>
+      </div>
+
+    </div>
+  </div>
+ </div>
+</div>
+
+<script>
+/* ============================================================
+   DATA
+   ============================================================ */
+const CATS = {
+  sin:      { name: "Sin categoría", color: "#8E8E93", icon: "tag" },
+  trabajo:  { name: "Trabajo",  color: "#0A84FF", icon: "briefcase" },
+  personal: { name: "Personal", color: "#BF5AF2", icon: "person" },
+  estudio:  { name: "Estudio",  color: "#FF9F0A", icon: "book" },
+  salud:    { name: "Salud",    color: "#FF453A", icon: "heart" },
+  otro:     { name: "Otro",     color: "#5E5CE6", icon: "circle" },
+};
+
+const ICONS = {
+  briefcase: '<path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M8 7V5.5A1.5 1.5 0 0 1 9.5 4h5A1.5 1.5 0 0 1 16 5.5V7"/>',
+  person: '<circle cx="12" cy="8" r="4"/><path d="M4 20c0-3.5 3.6-6 8-6s8 2.5 8 6"/>',
+  book: '<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 1 6.5 18H20"/>',
+  heart: '<path d="M12 20s-7-4.4-9.2-9C1.3 7.7 3 4.5 6.2 4.5c1.9 0 3.2 1.1 3.8 2.3.6-1.2 1.9-2.3 3.8-2.3 3.2 0 4.9 3.2 3.4 6.5C19 15.6 12 20 12 20z"/>',
+  tag: '<path d="M3 7v5.6c0 .5.2 1 .6 1.4l7.2 7.2c.8.8 2 .8 2.8 0l5.6-5.6c.8-.8.8-2 0-2.8L12 5.6c-.4-.4-.9-.6-1.4-.6H5a2 2 0 0 0-2 2z"/><circle cx="7.5" cy="9.5" r="1.3" fill="currentColor" stroke="none"/>',
+  circle: '<circle cx="12" cy="12" r="8"/>',
+};
+
+let TASKS = [
+  { id:1, title:"Revisar pull requests del equipo", cat:"trabajo", prio:"alta", time:"10:00", bucket:"hoy", done:false, subs:[{t:"Revisar API gateway", d:true},{t:"Aprobar fix de auth", d:false}] },
+  { id:2, title:"Llamar al dentista", cat:"salud", prio:"media", time:"14:30", bucket:"hoy", done:false, subs:[] },
+  { id:3, title:"Terminar capítulo de SwiftUI", cat:"estudio", prio:"media", time:"", bucket:"hoy", done:false, subs:[{t:"Leer sobre @State",d:false},{t:"Hacer el ejercicio",d:false}] },
+  { id:4, title:"Preparar presentación trimestral", cat:"trabajo", prio:"alta", time:"mañana", bucket:"proximas", done:false, subs:[] },
+  { id:5, title:"Comprar regalo de cumpleaños", cat:"personal", prio:"baja", time:"vie", bucket:"proximas", done:false, subs:[] },
+  { id:6, title:"Renovar suscripción del gym", cat:"salud", prio:"baja", time:"sáb", bucket:"proximas", done:false, subs:[] },
+  { id:7, title:"Enviar factura al cliente", cat:"trabajo", prio:"alta", time:"ayer", bucket:"vencidas", done:false, subs:[] },
+  { id:8, title:"Responder correos pendientes", cat:"trabajo", prio:"media", time:"", bucket:"hoy", done:true, subs:[] },
+  { id:9, title:"Meditar 10 minutos", cat:"salud", prio:"baja", time:"", bucket:"hoy", done:true, subs:[] },
+];
+let nextId = 10;
+
+const ACCENTS = {
+  blue:   { light:"#007AFF", dark:"#0A84FF" },
+  indigo: { light:"#5856D6", dark:"#5E5CE6" },
+  green:  { light:"#34C759", dark:"#30D158" },
+  orange: { light:"#FF9500", dark:"#FF9F0A" },
+  pink:   { light:"#FF2D55", dark:"#FF375F" },
+};
+let currentAccent = "blue";
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+const $ = s => document.querySelector(s);
+const device = $("#device");
+const content = $("#content");
+const navbar = $("#navbar");
+let currentFilter = "todas";
+
+function catIconSvg(cat){
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICONS[CATS[cat].icon]}</svg>`;
+}
+const checkSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 6"/></svg>';
+const flagSvg = '<svg class="flag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg>';
+
+/* ============================================================
+   RENDER LIST
+   ============================================================ */
+const BUCKET_LABELS = { hoy:"Hoy", proximas:"Próximas", vencidas:"Vencidas" };
+
+function render(){
+  const active = TASKS.filter(t => !t.done);
+  const done = TASKS.filter(t => t.done);
+  let html = "";
+
+  if (currentFilter === "todas") {
+    ["vencidas","hoy","proximas"].forEach(b => {
+      const items = active.filter(t => t.bucket === b);
+      if (items.length) html += section(BUCKET_LABELS[b], items);
+    });
+  } else {
+    const items = active.filter(t => t.bucket === currentFilter);
+    if (items.length) html += section(BUCKET_LABELS[currentFilter], items);
+    else html += emptyState();
+  }
+
+  if (done.length && (currentFilter === "todas" || currentFilter === "hoy")) {
+    html += section("Completadas", done, true);
+  }
+
+  content.innerHTML = html;
+  bindRows();
+}
+
+function section(label, items, isDone){
+  const rows = items.map(taskRow).join("");
+  return `
+    <div class="section-head">
+      <h2>${label}</h2>
+      <span class="count">${items.length}</span>
+    </div>
+    <ul class="list">${rows}</ul>`;
+}
+
+function taskRow(t){
+  const c = CATS[t.cat];
+  const metaParts = [];
+  metaParts.push(`<span class="dot ${t.prio}"></span>`);
+  if (t.cat !== "sin") metaParts.push(`<span>${c.name}</span>`);
+  if (t.time){
+    if (t.cat !== "sin") metaParts.push(`<span class="sep">·</span>`);
+    metaParts.push(`<span class="${t.bucket==='vencidas'?'overdue':''}">${t.time}</span>`);
+  }
+  const subInfo = t.subs.length ? `<span class="sep">·</span><span>${t.subs.filter(s=>s.d).length}/${t.subs.length}</span>` : "";
+  return `
+    <li class="task ${t.done?'done':''}" data-id="${t.id}">
+      <div class="task-actions left"><span>${checkSvg}</span></div>
+      <div class="task-actions right"><span>Eliminar</span></div>
+      <div class="task-row">
+        <button class="check" data-check>${checkSvg}</button>
+        <div class="task-main">
+          <div class="task-title">${t.title}</div>
+          <div class="task-meta">${metaParts.join("")}${subInfo}</div>
+        </div>
+        <div class="cat-ic" style="background:${c.color}">${catIconSvg(t.cat)}</div>
+      </div>
+    </li>`;
+}
+
+function emptyState(){
+  return `
+    <div class="empty">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12.5 2.5 2.5 4.5-5"/></svg>
+      <h3>Todo en orden</h3>
+      <p>No tienes tareas en esta vista.</p>
+    </div>`;
+}
+
+/* ============================================================
+   ROW INTERACTIONS (tap + swipe)
+   ============================================================ */
+function bindRows(){
+  content.querySelectorAll(".task").forEach(el => {
+    const id = +el.dataset.id;
+    const row = el.querySelector(".task-row");
+    const check = el.querySelector("[data-check]");
+
+    check.addEventListener("click", e => {
+      e.stopPropagation();
+      toggleDone(id, el);
+    });
+
+    row.addEventListener("click", e => {
+      if (Math.abs(swipeDX) > 6) return;
+      openDetail(id);
+    });
+
+    /* ---- swipe ---- */
+    let startX=0, startY=0, dragging=false, locked=false;
+    swipeDX = 0;
+    row.addEventListener("pointerdown", e => {
+      startX = e.clientX; startY = e.clientY; dragging = true; locked=false;
+      row.style.transition = "none";
+    });
+    row.addEventListener("pointermove", e => {
+      if (!dragging) return;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      if (!locked){
+        if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 8){ dragging=false; row.style.transition=""; return; }
+        if (Math.abs(dx) > 8){ locked=true; row.setPointerCapture(e.pointerId); }
+        else return;
+      }
+      swipeDX = dx;
+      const clamped = Math.max(-140, Math.min(140, dx));
+      row.style.transform = `translateX(${clamped}px)`;
+    });
+    const end = e => {
+      if (!dragging) return;
+      dragging = false;
+      row.style.transition = "transform .3s cubic-bezier(.32,.72,0,1)";
+      const dx = swipeDX;
+      if (dx > 90){            // swipe right -> complete
+        row.style.transform = "translateX(100%)";
+        setTimeout(() => toggleDone(id, el), 180);
+      } else if (dx < -90){    // swipe left -> delete
+        row.style.transform = "translateX(-100%)";
+        el.style.transition = "height .25s, opacity .25s";
+        setTimeout(() => { deleteTask(id); }, 200);
+      } else {
+        row.style.transform = "translateX(0)";
+      }
+      setTimeout(()=> swipeDX = 0, 50);
+    };
+    row.addEventListener("pointerup", end);
+    row.addEventListener("pointercancel", end);
+  });
+}
+let swipeDX = 0;
+
+function toggleDone(id, el){
+  const t = TASKS.find(x => x.id === id);
+  t.done = !t.done;
+  if (t.done) hapticToast("Tarea completada");
+  render();
+}
+function deleteTask(id){
+  TASKS = TASKS.filter(x => x.id !== id);
+  hapticToast("Tarea eliminada");
+  render();
+}
+
+/* ============================================================
+   NAV: scroll shadow + segmented
+   ============================================================ */
+content.addEventListener("scroll", () => {
+  navbar.classList.toggle("scrolled", content.scrollTop > 10);
+});
+
+const segThumb = $("#segThumb");
+function moveThumb(btn){
+  const seg = $("#segmented");
+  const r = btn.getBoundingClientRect();
+  const sr = seg.getBoundingClientRect();
+  segThumb.style.width = r.width + "px";
+  segThumb.style.transform = `translateX(${r.left - sr.left - 2}px)`;
+}
+$("#segmented").querySelectorAll(".seg").forEach(btn => {
+  btn.addEventListener("click", () => {
+    $("#segmented").querySelectorAll(".seg").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    currentFilter = btn.dataset.filter;
+    moveThumb(btn);
+    render();
+    content.scrollTop = 0;
+    navbar.classList.remove("scrolled");
+  });
+});
+
+/* ============================================================
+   SHEETS
+   ============================================================ */
+const scrim = $("#scrim");
+let openSheet = null;
+
+function showSheet(id){
+  openSheet = $("#" + id);
+  scrim.classList.add("show");
+  openSheet.classList.add("show");
+}
+function hideSheet(){
+  if (!openSheet) return;
+  openSheet.classList.remove("show");
+  scrim.classList.remove("show");
+  openSheet = null;
+}
+scrim.addEventListener("click", hideSheet);
+
+/* drag-to-dismiss on grabber */
+document.querySelectorAll("[data-drag]").forEach(g => {
+  let sy=0, drag=false;
+  const sheet = $("#" + g.dataset.drag);
+  g.addEventListener("pointerdown", e => { sy=e.clientY; drag=true; sheet.style.transition="none"; g.setPointerCapture(e.pointerId); });
+  g.addEventListener("pointermove", e => {
+    if(!drag) return;
+    const dy = Math.max(0, e.clientY - sy);
+    sheet.style.transform = `translateY(${dy}px)`;
+  });
+  g.addEventListener("pointerup", e => {
+    if(!drag) return; drag=false;
+    sheet.style.transition="";
+    const dy = e.clientY - sy;
+    sheet.style.transform = "";
+    if (dy > 110) hideSheet();
+  });
+});
+
+/* ---------- NEW TASK ---------- */
+let draft = { prio:"media", cat:"sin", subs:[] };
+
+function openNew(){
+  draft = { prio:"media", cat:"sin", subs:[] };
+  $("#taskTitle").value = "";
+  $("#taskNotes").value = "";
+  $("#reminderToggle").classList.remove("on");
+  $("#persistToggle").classList.remove("on");
+  $("#prioSeg").querySelectorAll(".prio-opt").forEach(o => o.classList.toggle("sel", o.dataset.prio === "media"));
+  renderChips();
+  renderSubs();
+  validateNew();
+  showSheet("newSheet");
+  setTimeout(()=> $("#taskTitle").focus(), 350);
+}
+$("#newBtnTop").addEventListener("click", openNew);
+$("#cancelNew").addEventListener("click", hideSheet);
+
+function validateNew(){
+  const ok = $("#taskTitle").value.trim().length > 0;
+  $("#saveNew").disabled = !ok;
+  $("#saveNewBig").disabled = !ok;
+}
+$("#taskTitle").addEventListener("input", validateNew);
+$("#taskNotes").addEventListener("input", e => {
+  e.target.style.height = "auto";
+  e.target.style.height = e.target.scrollHeight + "px";
+});
+
+$("#prioSeg").querySelectorAll(".prio-opt").forEach(o => {
+  o.addEventListener("click", () => {
+    $("#prioSeg").querySelectorAll(".prio-opt").forEach(x => x.classList.remove("sel"));
+    o.classList.add("sel");
+    draft.prio = o.dataset.prio;
+  });
+});
+
+function renderChips(){
+  $("#catChips").innerHTML = Object.entries(CATS).map(([k,c]) => `
+    <button class="chip ${draft.cat===k?'sel':''}" data-cat="${k}" style="${draft.cat===k?`background:${c.color}`:''}">
+      <span class="cd" style="background:${c.color}"></span>${c.name}
+    </button>`).join("");
+  $("#catChips").querySelectorAll(".chip").forEach(ch => {
+    ch.addEventListener("click", () => { draft.cat = ch.dataset.cat; renderChips(); });
+  });
+}
+
+function renderSubs(){
+  const list = $("#subList");
+  const rows = draft.subs.map((s,i) => `
+    <div class="subtask ${s.d?'done':''}" data-i="${i}">
+      <div class="mini-check" data-subcheck>${checkSvg}</div>
+      <span>${s.t}</span>
+    </div>`).join("");
+  list.innerHTML = rows + `
+    <div class="subtask add-sub" id="addSubRow">
+      <div class="mini-check" style="border-color:var(--accent);border-style:dashed">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" style="opacity:1"><path d="M12 5v14M5 12h14"/></svg>
+      </div>
+      <span style="color:var(--accent)">Agregar subtarea</span>
+    </div>`;
+  list.querySelectorAll("[data-subcheck]").forEach(mc => {
+    mc.addEventListener("click", () => {
+      const i = +mc.closest(".subtask").dataset.i;
+      draft.subs[i].d = !draft.subs[i].d; renderSubs();
+    });
+  });
+  $("#addSubRow").addEventListener("click", addSubInput);
+}
+function addSubInput(){
+  const list = $("#subList");
+  const addRow = $("#addSubRow");
+  const row = document.createElement("div");
+  row.className = "subtask";
+  row.innerHTML = `<div class="mini-check"></div><input placeholder="Nueva subtarea" autocomplete="off">`;
+  list.insertBefore(row, addRow);
+  const inp = row.querySelector("input");
+  inp.focus();
+  const commit = () => {
+    const v = inp.value.trim();
+    if (v){ draft.subs.push({t:v, d:false}); }
+    renderSubs();
+  };
+  inp.addEventListener("keydown", e => { if(e.key==="Enter"){ commit(); setTimeout(addSubInput, 50);} });
+  inp.addEventListener("blur", commit);
+}
+
+$("#reminderToggle").addEventListener("click", e => e.currentTarget.classList.toggle("on"));
+$("#persistToggle").addEventListener("click", e => e.currentTarget.classList.toggle("on"));
+
+function saveNew(){
+  const title = $("#taskTitle").value.trim();
+  if (!title) return;
+  TASKS.unshift({
+    id: nextId++, title, cat: draft.cat, prio: draft.prio,
+    time: $("#reminderToggle").classList.contains("on") ? "Hoy" : "",
+    bucket: "hoy", done:false, subs: draft.subs.slice()
+  });
+  hideSheet();
+  currentFilter = "todas";
+  $("#segmented").querySelectorAll(".seg").forEach(b => b.classList.toggle("active", b.dataset.filter==="todas"));
+  moveThumb($("#segmented .seg"));
+  render();
+  hapticToast("Tarea agregada");
+}
+$("#saveNew").addEventListener("click", saveNew);
+$("#saveNewBig").addEventListener("click", saveNew);
+
+/* ---------- DETAIL ---------- */
+function openDetail(id){
+  const t = TASKS.find(x => x.id === id);
+  const c = CATS[t.cat];
+  const prioName = { alta:"Alta", media:"Media", baja:"Baja" }[t.prio];
+  const prioColor = { alta:"var(--red)", media:"var(--orange)", baja:"var(--green)" }[t.prio];
+  const subsDone = t.subs.filter(s=>s.d).length;
+  $("#detailBody").innerHTML = `
+    <div class="detail-title">${t.title}</div>
+    <div class="detail-pills">
+      <span class="detail-pill"><span class="pd" style="background:${prioColor}"></span>Prioridad ${prioName}</span>
+      <span class="detail-pill" style="background:color-mix(in srgb, ${c.color} 18%, transparent)"><span class="pd" style="background:${c.color}"></span>${c.name}</span>
+      ${t.time ? `<span class="detail-pill">${t.time}</span>` : ""}
+    </div>
+    ${t.subs.length ? `
+      <div class="sheet-list-label">Subtareas · ${subsDone}/${t.subs.length}</div>
+      <div class="sheet-list">
+        ${t.subs.map((s,i)=>`
+          <div class="subtask ${s.d?'done':''}" data-di="${i}">
+            <div class="mini-check" data-dcheck>${checkSvg}</div>
+            <span>${s.t}</span>
+          </div>`).join("")}
+      </div>` : `<p style="color:var(--label-2);font-size:15px;margin:0 0 22px">Sin subtareas.</p>`}
+    <button class="btn-primary" id="detailComplete" style="background:${t.done?'var(--fill)':'var(--accent)'};color:${t.done?'var(--label)':'#fff'}">
+      ${t.done ? "Marcar como pendiente" : "Completar tarea"}
+    </button>`;
+  $("#detailBody").querySelectorAll("[data-dcheck]").forEach(mc => {
+    mc.addEventListener("click", () => {
+      const i = +mc.closest(".subtask").dataset.di;
+      t.subs[i].d = !t.subs[i].d; openDetail(id);
+    });
+  });
+  $("#detailComplete").addEventListener("click", () => {
+    t.done = !t.done; hideSheet(); render();
+    hapticToast(t.done ? "Tarea completada" : "Marcada como pendiente");
+  });
+  showSheet("detailSheet");
+}
+$("#closeDetail").addEventListener("click", hideSheet);
+$("#editDetail").addEventListener("click", hideSheet);
+
+/* ---------- APPEARANCE ---------- */
+$("#appearBtn").addEventListener("click", () => showSheet("appearSheet"));
+$("#closeAppear").addEventListener("click", hideSheet);
+
+$("#themeGrid").querySelectorAll("[data-theme-pick]").forEach(card => {
+  card.addEventListener("click", () => {
+    $("#themeGrid").querySelectorAll(".appear-card").forEach(c => c.classList.remove("sel"));
+    card.classList.add("sel");
+    setTheme(card.dataset.themePick);
+  });
+});
+
+function setTheme(mode){
+  device.dataset.theme = mode;
+  applyAccent();
+  setTimeout(()=> moveThumb($("#segmented .seg.active")), 50);
+}
+
+function renderAccents(){
+  $("#accentRow").innerHTML = Object.entries(ACCENTS).map(([k,v]) => `
+    <button class="accent-dot ${currentAccent===k?'sel':''}" data-accent="${k}" style="background:${v[device.dataset.theme]}">
+      ${checkSvg}
+    </button>`).join("");
+  $("#accentRow").querySelectorAll(".accent-dot").forEach(d => {
+    d.addEventListener("click", () => {
+      currentAccent = d.dataset.accent;
+      applyAccent();
+      renderAccents();
+    });
+  });
+}
+function applyAccent(){
+  device.style.setProperty("--accent", ACCENTS[currentAccent][device.dataset.theme]);
+  renderAccents();
+}
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+let toastTimer;
+function hapticToast(msg){
+  $("#toastMsg").textContent = msg;
+  $("#toast").classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=> $("#toast").classList.remove("show"), 1600);
+}
+
+/* ============================================================
+   TABS (visual)
+   ============================================================ */
+document.querySelectorAll(".tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+    if (tab.dataset.tab !== "tareas") hapticToast("«" + tab.querySelector("svg").nextSibling.textContent.trim() + "» — próximamente");
+  });
+});
+
+/* ============================================================
+   INIT
+   ============================================================ */
+render();
+renderChips();
+renderAccents();
+applyAccent();
+requestAnimationFrame(() => moveThumb($("#segmented .seg.active")));
+
+/* scale device to fit viewport */
+function fit(){
+  const dev = document.querySelector(".device");
+  const fitEl = document.getElementById("fit");
+  const pad = 32;
+  const scale = Math.min(1, (window.innerHeight - pad) / 852, (window.innerWidth - pad) / 393);
+  dev.style.transformOrigin = "top left";
+  dev.style.transform = `scale(${scale})`;
+  fitEl.style.width = (393 * scale) + "px";
+  fitEl.style.height = (852 * scale) + "px";
+}
+window.addEventListener("resize", fit);
+fit();
+</script>
+</body>
+</html>
