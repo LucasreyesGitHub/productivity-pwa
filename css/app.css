@@ -1582,15 +1582,18 @@ input::placeholder { color: var(--text-3); }
     position: fixed;
     top: 0; left: 0; right: 0;
     z-index: 40;
-    background: var(--material);
-    -webkit-backdrop-filter: saturate(180%) blur(22px);
-    backdrop-filter: saturate(180%) blur(22px);
+    background: transparent;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
     border-bottom: .5px solid transparent;
     padding-top: env(safe-area-inset-top, 0px);
-    transition: border-color .2s linear, background .4s var(--ease-ios);
+    transition: border-color .2s linear, background .35s var(--ease-ios), backdrop-filter .35s;
   }
 
   .ios-navbar.scrolled {
+    background: var(--material);
+    -webkit-backdrop-filter: saturate(180%) blur(22px);
+    backdrop-filter: saturate(180%) blur(22px);
     border-bottom-color: var(--separator);
   }
 

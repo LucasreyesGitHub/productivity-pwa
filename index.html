@@ -332,44 +332,6 @@
         <!-- ── TASKS ──────────────────────────────────── -->
         <section id="section-tasks" class="section hidden">
 
-          <!-- Quick add panel -->
-          <div class="quick-add" id="quick-add" hidden>
-            <div class="qa-card">
-              <div class="qa-input-wrap">
-                <i class="ti ti-circle-dashed qa-icon"></i>
-                <input id="qa-input" class="qa-input" placeholder="Nombre de la tarea…" autocomplete="off">
-              </div>
-              <div class="qa-meta">
-                <div class="qa-type-toggle">
-                  <button class="qa-type-btn active" id="qa-type-persistent" onclick="setQaType('persistent')" type="button">
-                    <i class="ti ti-infinity"></i> Persistente
-                  </button>
-                  <button class="qa-type-btn" id="qa-type-daily" onclick="setQaType('daily')" type="button">
-                    <i class="ti ti-sun"></i> Hoy
-                  </button>
-                </div>
-                <select id="qa-cat" class="qa-select">
-                  <option value="">Sin categoría</option>
-                  <option value="trabajo">Trabajo</option>
-                  <option value="personal">Personal</option>
-                  <option value="estudio">Estudio</option>
-                  <option value="salud">Salud</option>
-                  <option value="otro">Otro</option>
-                </select>
-                <select id="qa-priority" class="qa-select">
-                  <option value="med">Media</option>
-                  <option value="high">Alta</option>
-                  <option value="low">Baja</option>
-                </select>
-                <input id="qa-date" type="date" class="qa-date">
-              </div>
-              <div class="qa-footer">
-                <button class="qa-cancel" id="qa-cancel">Cancelar <kbd>Esc</kbd></button>
-                <button class="qa-submit" id="qa-submit">Agregar tarea</button>
-              </div>
-            </div>
-          </div>
-
           <div id="task-list" class="task-list"></div>
 
           <div class="empty-state" id="empty-state" hidden>
@@ -571,6 +533,44 @@
 
   <!-- ══ iOS SCRIM ═════════════════════════════════════════ -->
   <div class="ios-scrim" id="ios-scrim"></div>
+
+  <!-- ══ QUICK ADD (global sheet, funciona desde cualquier sección) ══ -->
+  <div class="quick-add" id="quick-add" hidden>
+    <div class="qa-card">
+      <div class="qa-input-wrap">
+        <i class="ti ti-circle-dashed qa-icon"></i>
+        <input id="qa-input" class="qa-input" placeholder="Nombre de la tarea…" autocomplete="off">
+      </div>
+      <div class="qa-meta">
+        <div class="qa-type-toggle">
+          <button class="qa-type-btn active" id="qa-type-persistent" onclick="setQaType('persistent')" type="button">
+            <i class="ti ti-infinity"></i> Persistente
+          </button>
+          <button class="qa-type-btn" id="qa-type-daily" onclick="setQaType('daily')" type="button">
+            <i class="ti ti-sun"></i> Hoy
+          </button>
+        </div>
+        <select id="qa-cat" class="qa-select">
+          <option value="">Sin categoría</option>
+          <option value="trabajo">Trabajo</option>
+          <option value="personal">Personal</option>
+          <option value="estudio">Estudio</option>
+          <option value="salud">Salud</option>
+          <option value="otro">Otro</option>
+        </select>
+        <select id="qa-priority" class="qa-select">
+          <option value="med">Media</option>
+          <option value="high">Alta</option>
+          <option value="low">Baja</option>
+        </select>
+        <input id="qa-date" type="date" class="qa-date">
+      </div>
+      <div class="qa-footer">
+        <button class="qa-cancel" id="qa-cancel">Cancelar <kbd>Esc</kbd></button>
+        <button class="qa-submit" id="qa-submit">Agregar tarea</button>
+      </div>
+    </div>
+  </div>
 
   <!-- ══ "MÁS" MENU SHEET ══════════════════════════════════ -->
   <div class="ios-sheet" id="ios-more-sheet">
@@ -821,16 +821,16 @@
 </div>
 
 <!-- ══ SCRIPTS ═══════════════════════════════════════════ -->
-<script src="js/config.js?v=12"></script>
-<script src="js/auth.js?v=12"></script>
-<script src="js/db.js?v=12"></script>
-<script src="js/tasks.js?v=12"></script>
-<script src="js/habits.js?v=12"></script>
-<script src="js/goals.js?v=12"></script>
-<script src="js/dashboard.js?v=12"></script>
-<script src="js/stats.js?v=12"></script>
-<script src="js/calendar.js?v=12"></script>
-<script src="js/ideas.js?v=12"></script>
-<script src="js/app.js?v=12"></script>
+<script src="js/config.js?v=13"></script>
+<script src="js/auth.js?v=13"></script>
+<script src="js/db.js?v=13"></script>
+<script src="js/tasks.js?v=13"></script>
+<script src="js/habits.js?v=13"></script>
+<script src="js/goals.js?v=13"></script>
+<script src="js/dashboard.js?v=13"></script>
+<script src="js/stats.js?v=13"></script>
+<script src="js/calendar.js?v=13"></script>
+<script src="js/ideas.js?v=13"></script>
+<script src="js/app.js?v=13"></script>
 </body>
 </html>

@@ -115,9 +115,13 @@ function setQaType(type) {
 }
 
 function openQuickAdd() {
-  const tasksSection = document.getElementById('section-tasks');
-  if (tasksSection && tasksSection.classList.contains('hidden')) {
-    setView(currentView || 'inbox');
+  // En mobile el quick-add es un sheet global — no navegar a tasks
+  const isMob = typeof isMobile === 'function' ? isMobile() : window.innerWidth <= 768;
+  if (!isMob) {
+    const tasksSection = document.getElementById('section-tasks');
+    if (tasksSection && tasksSection.classList.contains('hidden')) {
+      setView(currentView || 'inbox');
+    }
   }
   const qa = document.getElementById('quick-add');
   if (!qa.hidden) { document.getElementById('qa-input').focus(); return; }
