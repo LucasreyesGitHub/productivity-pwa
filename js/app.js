@@ -347,18 +347,33 @@ function isMobile() {
   return true;
 }
 
+const IOS_SUBTITLES = {
+  dashboard: () => {
+    const h = new Date().getHours();
+    return h < 12 ? 'Buenos días' : h < 18 ? 'Buenas tardes' : 'Buenas noches';
+  },
+  tasks:    () => 'Gestioná tus pendientes',
+  habits:   () => 'Construí rutinas que duran',
+  goals:    () => 'Tus metas a largo plazo',
+  calendar: () => new Date().toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' }),
+  stats:    () => 'Resumen de actividad',
+  ideas:    () => 'Capturá lo que se te ocurre',
+};
+
 // ── Update iOS nav bar title + controls ────────────────
 function iosUpdateNavbar(section) {
   const title = IOS_SECTION_TITLES[section] || section;
 
   const largeTitle    = document.getElementById('ios-large-title');
   const compactTitle  = document.getElementById('ios-compact-title');
+  const subtitle      = document.getElementById('ios-large-subtitle');
   const tasksControls = document.getElementById('ios-tasks-controls');
   const addBtn        = document.getElementById('ios-add-btn');
   const moreBtn       = document.getElementById('ios-more-btn');
 
   if (largeTitle)    largeTitle.textContent   = title;
   if (compactTitle)  compactTitle.textContent  = title;
+  if (subtitle) subtitle.textContent = IOS_SUBTITLES[section]?.() ?? '';
 
   const isTasksSection = (section === 'tasks');
   if (tasksControls) tasksControls.classList.toggle('hidden-controls', !isTasksSection);
@@ -564,22 +579,7 @@ function initIosNav() {
 
   // Tab bar clicks
   document.querySelectorAll('.ios-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      const t = tab.dataset.iosTab;
-      if (t === 'more') {
-        iosShowSheet('ios-more-sheet');
-        // Update user email in sheet
-        const emailEl = document.getElementById('ios-user-email');
-        const mainEmailEl = document.getElementById('user-email-label');
-        if (emailEl && mainEmailEl) emailEl.textContent = mainEmailEl.textContent;
-        // Sync sync-dot
-        const mainDot = document.getElementById('sync-dot');
-        const iosDot  = document.getElementById('ios-sync-dot');
-        if (mainDot && iosDot) iosDot.className = mainDot.className;
-      } else {
-        iosTabNav(t);
-      }
-    });
+    tab.addEventListener('click', () => iosTabNav(tab.dataset.iosTab));
   });
 
   // + button (new task on tasks view)
@@ -630,7 +630,7 @@ function initIosNav() {
     _orig(name);
     if (isMobile()) {
       iosUpdateNavbar(name);
-      const tabMap = { dashboard:'dashboard', tasks:'tasks', habits:'habits', goals:'goals', stats:'more', calendar:'more', ideas:'more' };
+      const tabMap = { dashboard:'dashboard', tasks:'tasks', habits:'habits', goals:'goals', calendar:'calendar', stats:'more', ideas:'more' };
       const tabKey = tabMap[name] || 'more';
       document.querySelectorAll('.ios-tab').forEach(t => t.classList.toggle('active', t.dataset.iosTab === tabKey));
     }

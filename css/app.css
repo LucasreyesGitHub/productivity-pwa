@@ -1625,12 +1625,21 @@ input::placeholder { color: var(--text-3); }
   .ios-icon-btn.muted { color: var(--text-2); }
 
   .ios-large-title {
-    padding: 0 16px 8px;
+    padding: 0 16px 2px;
     font-size: 34px; font-weight: 700;
     letter-spacing: .37px; color: var(--text); line-height: 1.1;
     transition: opacity .2s;
   }
   .ios-navbar.scrolled .ios-large-title { opacity: 0; pointer-events: none; }
+
+  .ios-large-subtitle {
+    padding: 0 16px 10px;
+    font-size: 13px; font-weight: 400; color: var(--text-2);
+    letter-spacing: -.1px;
+    transition: opacity .2s;
+  }
+  .ios-large-subtitle:empty { display: none; }
+  .ios-navbar.scrolled .ios-large-subtitle { opacity: 0; pointer-events: none; }
 
   /* Search field */
   .ios-search { padding: 2px 16px 10px; }
