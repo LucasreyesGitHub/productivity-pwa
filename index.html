@@ -438,30 +438,53 @@
         <!-- ── IDEAS ─────────────────────────────────── -->
         <section id="section-ideas" class="section hidden">
           <div class="section-header">
-            <h2>Ideas</h2>
-            <span id="idea-count" class="count-badge"></span>
+            <div>
+              <h2>Ideas</h2>
+              <p class="section-sub">Capturá tus proyectos e inspiraciones <span id="idea-count" class="count-badge"></span></p>
+            </div>
+            <button class="btn-primary btn-sm" onclick="toggleIdeaForm()">
+              <i class="ti ti-plus"></i>
+              Nueva idea
+            </button>
           </div>
-          <div class="input-row flex-wrap">
-            <input type="text" id="idea-name" placeholder="Nombre del proyecto..."
-              style="flex:2;min-width:140px" onkeydown="if(event.key==='Enter')addIdea()">
-            <input type="text" id="idea-desc" placeholder="Descripción breve..."
-              style="flex:3;min-width:160px">
-            <select id="idea-tag">
-              <option value="diseño">Diseño</option>
-              <option value="tech">Tech</option>
-              <option value="negocio">Negocio</option>
-              <option value="personal">Personal</option>
-              <option value="otro">Otro</option>
-            </select>
-            <button class="btn-primary" onclick="addIdea()">+ Idea</button>
+
+          <!-- Formulario colapsable -->
+          <div id="idea-add-form" class="idea-add-form" hidden>
+            <div class="idea-form-card">
+              <div class="form-group">
+                <label for="idea-name">Nombre del proyecto</label>
+                <input type="text" id="idea-name" placeholder="Ej: App de finanzas personales"
+                  autocomplete="off" onkeydown="if(event.key==='Enter')addIdea()">
+              </div>
+              <div class="form-group">
+                <label for="idea-desc">Descripción <span class="optional">opcional</span></label>
+                <input type="text" id="idea-desc" placeholder="¿De qué trata esta idea?">
+              </div>
+              <div class="idea-form-row">
+                <div class="form-group">
+                  <label for="idea-tag">Categoría</label>
+                  <select id="idea-tag">
+                    <option value="diseño">Diseño</option>
+                    <option value="tech">Tech</option>
+                    <option value="negocio">Negocio</option>
+                    <option value="personal">Personal</option>
+                    <option value="otro">Otro</option>
+                  </select>
+                </div>
+                <button class="btn-primary idea-form-submit" onclick="addIdea()">
+                  Guardar
+                </button>
+              </div>
+            </div>
           </div>
+
           <div class="ideas-grid" id="ideas-grid"></div>
           <div class="export-row">
             <button class="btn-secondary" onclick="exportJSON()">
-              <i class="ti ti-download"></i> Exportar JSON
+              <i class="ti ti-download"></i> Exportar
             </button>
             <label class="btn-secondary">
-              <i class="ti ti-upload"></i> Importar JSON
+              <i class="ti ti-upload"></i> Importar
               <input type="file" accept=".json" onchange="importJSON(event)" style="display:none">
             </label>
           </div>

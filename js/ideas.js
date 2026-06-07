@@ -1,3 +1,11 @@
+function toggleIdeaForm() {
+  const form = document.getElementById('idea-add-form');
+  form.hidden = !form.hidden;
+  if (!form.hidden) {
+    setTimeout(() => document.getElementById('idea-name')?.focus(), 50);
+  }
+}
+
 async function addIdea() {
   const name = document.getElementById('idea-name').value.trim();
   const desc = document.getElementById('idea-desc').value.trim();
@@ -7,6 +15,8 @@ async function addIdea() {
   await dbAddIdea({ id: crypto.randomUUID(), name, desc: desc, tag });
   document.getElementById('idea-name').value = '';
   document.getElementById('idea-desc').value = '';
+  const form = document.getElementById('idea-add-form');
+  if (form) form.hidden = true;
   setSyncStatus('synced', 'Sincronizado');
   renderIdeas();
 }
@@ -21,7 +31,14 @@ function renderIdeas() {
   const grid = document.getElementById('ideas-grid');
   document.getElementById('idea-count').textContent = ideas.length;
   const tagLabels = { diseño:'Diseño', tech:'Tech', negocio:'Negocio', personal:'Personal', otro:'Otro' };
-  if (!ideas.length) { grid.innerHTML = '<div class="empty" style="grid-column:1/-1">Sin ideas aún</div>'; return; }
+  if (!ideas.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;pointer-events:auto">
+      <i class="ti ti-bulb"></i>
+      <p class="empty-title">Sin ideas aún</p>
+      <p class="empty-sub">Tocá "Nueva idea" para capturar tu primera inspiración</p>
+    </div>`;
+    return;
+  }
   grid.innerHTML = ideas.map(i => `
     <div class="idea-card">
       <span class="idea-tag-badge t-${i.tag}">${tagLabels[i.tag]}</span>
