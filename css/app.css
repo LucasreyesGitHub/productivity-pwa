@@ -10,6 +10,10 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Garantiza que [hidden] siempre oculta.
+   Excepción: #quick-add usa transform para animar salida (display:flex + translateY). */
+[hidden]:not(#quick-add) { display: none !important; }
+
 /* ─── Design Tokens ─────────────────────────────────────── */
 :root {
   /* iOS Light */
