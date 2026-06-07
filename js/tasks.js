@@ -114,7 +114,7 @@ function setQaType(type) {
   }
 }
 
-function openQuickAdd() {
+function openQuickAdd(prefillDate = null) {
   // En mobile el quick-add es un sheet global — no navegar a tasks
   const isMob = typeof isMobile === 'function' ? isMobile() : window.innerWidth <= 768;
   if (!isMob) {
@@ -127,9 +127,13 @@ function openQuickAdd() {
   if (!qa.hidden) { document.getElementById('qa-input').focus(); return; }
   qa.hidden = false;
   setQaType('persistent');
-  if (currentView === 'today') {
-    const di = document.getElementById('qa-date');
-    if (di) di.value = todayStr();
+  const di = document.getElementById('qa-date');
+  if (di) {
+    if (prefillDate) {
+      di.value = prefillDate;
+    } else if (currentView === 'today') {
+      di.value = todayStr();
+    }
   }
   const catMap = { 'cat-trabajo':'trabajo','cat-personal':'personal','cat-estudio':'estudio','cat-salud':'salud','cat-otro':'otro' };
   if (catMap[currentView]) document.getElementById('qa-cat').value = catMap[currentView];

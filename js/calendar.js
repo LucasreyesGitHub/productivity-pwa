@@ -131,7 +131,21 @@ function renderDayPanel(tasksByDate, eventsByDate) {
       <div class="day-panel-empty">
         <i class="ti ti-sun"></i>
         <span>Día libre — sin tareas ni eventos</span>
-        <button class="btn-link" onclick="document.getElementById('event-label').focus()">+ Agregar evento</button>
+        <div class="day-panel-empty-actions">
+          <button class="btn-primary btn-sm" onclick="openQuickAdd('${selectedDate}')">
+            <i class="ti ti-plus"></i> Nueva tarea
+          </button>
+          <button class="btn-secondary btn-sm" onclick="document.getElementById('event-label-inline')?.focus()">
+            <i class="ti ti-calendar-plus"></i> Nuevo evento
+          </button>
+        </div>
+      </div>
+      <div class="day-panel-add">
+        <input class="day-event-input" id="event-label-inline" placeholder="Nuevo evento para este día…"
+          onkeydown="if(event.key==='Enter'){document.getElementById('event-label').value=this.value;addEvent()}">
+        <button class="btn-primary btn-sm" onclick="document.getElementById('event-label').value=document.getElementById('event-label-inline').value;addEvent()">
+          Agregar
+        </button>
       </div>`;
     panel.classList.remove('hidden');
     return;
@@ -143,7 +157,7 @@ function renderDayPanel(tasksByDate, eventsByDate) {
     const overdue = t.due_date < todayStr();
     return `
       <div class="day-task-row" onclick="setView('inbox');setTimeout(()=>openTaskDetail('${t.id}'),80)">
-        <button class="task-check${t.done?'is-done':''}"
+        <button class="task-check${t.done?' is-done':''}"
           onclick="event.stopPropagation();toggleTask('${t.id}')" aria-label="Completar"></button>
         <span class="day-task-text">${escHtml(t.text)}</span>
         ${t.category ? `<span class="cat-chip cat-${t.category}">${catLabels[t.category]||t.category}</span>` : ''}
@@ -178,11 +192,16 @@ function renderDayPanel(tasksByDate, eventsByDate) {
       <div class="day-events-list">${eventRows}</div>
     </div>` : ''}
     <div class="day-panel-add">
-      <input class="day-event-input" id="event-label-inline" placeholder="Nuevo evento para este día…"
-        onkeydown="if(event.key==='Enter'){document.getElementById('event-label').value=this.value;addEvent()}">
-      <button class="btn-primary btn-sm" onclick="document.getElementById('event-label').value=document.getElementById('event-label-inline').value;addEvent()">
-        Agregar
+      <button class="btn-primary btn-sm day-panel-add-task" onclick="openQuickAdd('${selectedDate}')">
+        <i class="ti ti-plus"></i> Nueva tarea
       </button>
+      <div class="day-panel-event-row">
+        <input class="day-event-input" id="event-label-inline" placeholder="Nuevo evento…"
+          onkeydown="if(event.key==='Enter'){document.getElementById('event-label').value=this.value;addEvent()}">
+        <button class="btn-secondary btn-sm" onclick="document.getElementById('event-label').value=document.getElementById('event-label-inline').value;addEvent()">
+          + Evento
+        </button>
+      </div>
     </div>`;
   panel.classList.remove('hidden');
 
