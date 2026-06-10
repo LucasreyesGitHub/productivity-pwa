@@ -23,6 +23,8 @@ function openCategoryModal(editId = null) {
   colorOpts.forEach((b, i) => b.classList.toggle('active', i === 0));
   document.getElementById('cat-modal-color').value = DEFAULT_CAT_COLORS[0];
 
+  const titleEl = document.querySelector('#modal-category-form .modal-header h3');
+
   if (editId) {
     const cat = getCustomCategories().find(c => c.id === editId);
     if (cat) {
@@ -30,7 +32,10 @@ function openCategoryModal(editId = null) {
       document.getElementById('cat-modal-color').value = cat.color;
       document.getElementById('cat-modal-form').dataset.editId = editId;
       colorOpts.forEach(b => b.classList.toggle('active', b.dataset.color === cat.color));
+      if (titleEl) titleEl.textContent = 'Editar categoría';
     }
+  } else {
+    if (titleEl) titleEl.textContent = 'Nueva categoría';
   }
   openModal('modal-category-form');
   setTimeout(() => document.getElementById('cat-modal-name')?.focus(), 80);
@@ -82,11 +87,23 @@ function renderSidebarCustomCats() {
   if (!container) return;
   const cats = getCustomCategories();
   container.innerHTML = cats.map(c => `
-    <button class="nav-item" data-view="cat-custom-${c.id}">
-      <span class="cat-dot" style="background:${c.color}"></span>
-      <span>${escHtml(c.name)}</span>
-      <span class="nav-badge" id="cnt-custom-${c.id}"></span>
-    </button>`).join('');
+    <div class="nav-item-wrap" data-cat-id="${c.id}">
+      <button class="nav-item nav-item--cat-custom" data-view="cat-custom-${c.id}">
+        <span class="cat-dot" style="background:${c.color}"></span>
+        <span>${escHtml(c.name)}</span>
+        <span class="nav-badge" id="cnt-custom-${c.id}"></span>
+      </button>
+      <div class="nav-item-actions">
+        <button class="nav-item-action-btn" title="Editar categoría"
+          onclick="event.stopPropagation();openCategoryModal('${c.id}')">
+          <i class="ti ti-pencil"></i>
+        </button>
+        <button class="nav-item-action-btn nav-item-action-btn--danger" title="Eliminar categoría"
+          onclick="event.stopPropagation();confirmDeleteCategory('${c.id}','${escHtml(c.name)}')">
+          <i class="ti ti-trash"></i>
+        </button>
+      </div>
+    </div>`).join('');
 
   // wire up click events
   container.querySelectorAll('[data-view]').forEach(btn => {
@@ -95,6 +112,12 @@ function renderSidebarCustomCats() {
       closeMobileSidebar();
     });
   });
+}
+
+function confirmDeleteCategory(id, name) {
+  if (confirm(`¿Eliminar la categoría "${name}"? Las tareas de esta categoría quedarán sin categoría.`)) {
+    deleteCustomCategory(id);
+  }
 }
 
 function refreshCategoryDropdowns() {
@@ -643,9 +666,32 @@ function initIosNav() {
   setView = function(view) {
     _orig(view);
     if (isMobile()) {
-      iosUpdateNavbar('tasks');
+      const isCatView = view.startsWith('cat-');
+      const navbar = document.getElementById('ios-navbar');
+      const tasksControls = document.getElementById('ios-tasks-controls');
+      const addBtn = document.getElementById('ios-add-btn');
+      const moreBtn = document.getElementById('ios-more-btn');
+
+      if (isCatView) {
+        // Show category name as title, hide search/segmented
+        const title = VIEW_TITLES[view] || view;
+        const largeTitle   = document.getElementById('ios-large-title');
+        const compactTitle = document.getElementById('ios-compact-title');
+        const subtitle     = document.getElementById('ios-large-subtitle');
+        if (largeTitle)   largeTitle.textContent  = title;
+        if (compactTitle) compactTitle.textContent = title;
+        if (subtitle)     subtitle.textContent     = '';
+        if (tasksControls) tasksControls.classList.add('hidden-controls');
+        if (addBtn)  addBtn.style.display  = '';
+        if (moreBtn) moreBtn.style.display = 'none';
+        requestAnimationFrame(() => {
+          if (navbar) document.documentElement.style.setProperty('--ios-navbar-h', navbar.offsetHeight + 'px');
+        });
+      } else {
+        iosUpdateNavbar('tasks');
+        iosSyncSegmented(view);
+      }
       document.querySelectorAll('.ios-tab').forEach(t => t.classList.toggle('active', t.dataset.iosTab === 'tasks'));
-      iosSyncSegmented(view);
     }
   };
 }

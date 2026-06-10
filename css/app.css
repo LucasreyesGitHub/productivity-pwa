@@ -1627,6 +1627,28 @@ input::placeholder { color: var(--text-3); }
 .nav-item--add-cat:hover { color: var(--accent) !important; }
 .nav-item--add-cat i { font-size: 13px; opacity: .7; }
 
+/* ─── Nav item wrap (custom category + actions) ─────────── */
+.nav-item-wrap {
+  display: flex; align-items: center; gap: 2px;
+  border-radius: var(--r-sm);
+}
+.nav-item-wrap .nav-item { flex: 1; border-radius: var(--r-sm); }
+.nav-item-actions {
+  display: flex; gap: 1px; opacity: 0;
+  transition: opacity .15s;
+  flex-shrink: 0;
+}
+.nav-item-wrap:hover .nav-item-actions,
+.nav-item-wrap:focus-within .nav-item-actions { opacity: 1; }
+.nav-item-action-btn {
+  width: 26px; height: 26px; border: none; background: none;
+  color: var(--text-3); cursor: pointer; border-radius: 6px;
+  display: grid; place-items: center;
+  font-size: 13px; transition: color .15s, background .15s;
+}
+.nav-item-action-btn:hover { color: var(--accent); background: var(--accent-soft); }
+.nav-item-action-btn--danger:hover { color: var(--danger); background: var(--danger-soft); }
+
 /* ─── Touch — always show delete btns ──────────────────── */
 @media (hover: none) {
   .task-del, .del-btn { opacity: 1 !important; }

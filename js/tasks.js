@@ -553,7 +553,7 @@ async function renderTasks() {
         ${hasChips ? `
         <div class="task-card-chips">
           ${isDaily ? `<span class="type-badge type-daily"><i class="ti ti-sun"></i> Hoy</span>` : ''}
-          ${cat ? `<span class="cat-chip cat-${cat}">${catLabels[cat] || cat}</span>` : ''}
+          ${cat ? `<span class="cat-chip cat-${cat}" onclick="editCategory(event,'${t.id}')" title="Cambiar categoría" style="cursor:pointer">${catLabels[cat] || cat}</span>` : ''}
           ${dueLabel ? `<span class="due-chip ${dueCls}"><i class="ti ti-calendar-event"></i> ${dueLabel}</span>` : ''}
         </div>` : ''}
       </div>`;
