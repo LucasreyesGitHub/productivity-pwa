@@ -1,4 +1,4 @@
-const CACHE = 'tareas-v7';
+const CACHE = 'tareas-v8';
 const STATIC = [
   '/', '/index.html', '/css/app.css',
   '/js/config.js', '/js/auth.js', '/js/db.js',
