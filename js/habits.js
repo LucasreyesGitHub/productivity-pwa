@@ -1,4 +1,4 @@
-// habits.js — Habit tracking with streaks, completion rates and 7-day history
+// habits.js — Habit tracking with streaks, completion rates and a monthly streak grid
 
 // ── Helpers ────────────────────────────────────────────
 function getHabitCompletionDates(habitId) {
@@ -38,15 +38,44 @@ function getHabitRate(habitId, days = 7) {
   return Math.round((count / days) * 100);
 }
 
-function getLast7Days(habitId) {
+// ── Month streak grid (like a habit-tracker calendar) ──
+let habitsMonthOffset = 0;
+
+function changeHabitsMonth(delta) {
+  habitsMonthOffset += delta;
+  renderHabits();
+}
+
+function getMonthGrid(habitId, offset = 0) {
   const dates = getHabitCompletionDates(habitId);
-  return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() - (6 - i));
-    const ds = d.toISOString().split('T')[0];
-    const dayLabel = d.toLocaleDateString('es-AR', { weekday: 'short' }).charAt(0).toUpperCase();
-    return { date: ds, done: dates.includes(ds), label: dayLabel, note: getHabitNote(habitId, ds) };
-  });
+  const base = new Date();
+  base.setDate(1);
+  base.setMonth(base.getMonth() + offset);
+  const year = base.getFullYear(), month = base.getMonth();
+
+  const firstDay     = new Date(year, month, 1);
+  const daysInMonth   = new Date(year, month + 1, 0).getDate();
+  const startOffset   = (firstDay.getDay() + 6) % 7; // Monday-first
+  const today         = todayStr();
+
+  const cells = [];
+  for (let i = 0; i < startOffset; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) {
+    const ds = `${year}-${String(month + 1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    cells.push({
+      date: ds, day: d,
+      done: dates.includes(ds),
+      note: getHabitNote(habitId, ds),
+      isFuture: ds > today,
+    });
+  }
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  const weeks = [];
+  for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
+
+  const label = firstDay.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
+  return { weeks, label: label.charAt(0).toUpperCase() + label.slice(1) };
 }
 
 // ── Per-day notes ──────────────────────────────────────
@@ -165,6 +194,8 @@ function renderHabits() {
   const container = document.getElementById('habits-list');
   if (!container) return;
 
+  const dow = ['L','M','M','J','V','S','D'];
+
   if (!habits.length) {
     container.innerHTML = `
       <div class="empty-state">
@@ -172,14 +203,19 @@ function renderHabits() {
         <p class="empty-title">Sin hábitos todavía</p>
         <p class="empty-sub">Creá un hábito para empezar a construir tu rutina diaria</p>
       </div>`;
+    const monthLabelEl = document.getElementById('habits-month-label');
+    if (monthLabelEl) monthLabelEl.textContent = getMonthGrid('_', habitsMonthOffset).label;
     return;
   }
+
+  let sharedMonthLabel = '';
 
   container.innerHTML = habits.map(h => {
     const done   = isHabitDoneToday(h.id);
     const streak = getHabitStreak(h.id);
     const rate   = getHabitRate(h.id);
-    const last7  = getLast7Days(h.id);
+    const grid   = getMonthGrid(h.id, habitsMonthOffset);
+    sharedMonthLabel = grid.label;
     const color  = h.color || '#5b5bd6';
 
     return `
@@ -212,16 +248,29 @@ function renderHabits() {
             </div>
           </div>
         </div>
-        <div class="habit-history">
-          ${last7.map(d => `
-            <button type="button" class="habit-day" title="${d.date}${d.note ? ' · ' + escHtml(d.note) : ''}"
-              onclick="openHabitDayPopover('${h.id}','${d.date}', this)">
-              <span class="habit-day-dot ${d.done ? 'done' : ''}">${d.note ? '<span class="habit-day-note-dot"></span>' : ''}</span>
-              <span class="habit-day-label">${d.label}</span>
-            </button>`).join('')}
+        <div class="habit-month">
+          <div class="habit-month-dow">
+            ${dow.map(l => `<span>${l}</span>`).join('')}
+          </div>
+          <div class="habit-month-grid">
+            ${grid.weeks.map(week => week.map(cell => {
+              if (!cell) return '<span class="habit-month-day is-empty"></span>';
+              const cls = [cell.done ? 'done' : '', cell.isFuture ? 'is-future' : ''].filter(Boolean).join(' ');
+              const title = `${cell.date}${cell.note ? ' · ' + escHtml(cell.note) : ''}`;
+              return cell.isFuture
+                ? `<span class="habit-month-day ${cls}" title="${title}">${cell.day}</span>`
+                : `<button type="button" class="habit-month-day ${cls}" title="${title}"
+                    onclick="openHabitDayPopover('${h.id}','${cell.date}', this)">
+                    ${cell.day}${cell.note ? '<span class="habit-day-note-dot"></span>' : ''}
+                  </button>`;
+            }).join('')).join('')}
+          </div>
         </div>
       </div>`;
   }).join('');
+
+  const monthLabelEl = document.getElementById('habits-month-label');
+  if (monthLabelEl) monthLabelEl.textContent = sharedMonthLabel;
 }
 
 // ── Color selector ────────────────────────────────────
