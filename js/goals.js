@@ -73,6 +73,9 @@ function renderGoals() {
             <span>${cat.label}</span>
           </div>
           <span class="goal-status-badge goal-status--${status}">${statusLabel}</span>
+          <button class="icon-btn icon-btn--danger goal-del-btn" onclick="event.stopPropagation();deleteGoal('${g.id}')" title="Eliminar objetivo" aria-label="Eliminar objetivo">
+            <i class="ti ti-trash"></i>
+          </button>
         </div>
 
         <h3 class="goal-title">${escHtml(g.title)}</h3>
@@ -126,9 +129,6 @@ function renderGoals() {
             </button>
             <button class="btn-secondary btn-sm" onclick="event.stopPropagation();openGoalModal('${g.id}')">
               <i class="ti ti-pencil"></i> Editar
-            </button>
-            <button class="btn-danger btn-sm" onclick="event.stopPropagation();deleteGoal('${g.id}')">
-              <i class="ti ti-trash"></i>
             </button>
           </div>
         </div>
