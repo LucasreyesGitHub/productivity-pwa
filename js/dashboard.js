@@ -4,6 +4,7 @@ function renderDashboard() {
   if (!userId) return;
   const today       = todayStr();
   const tasks       = LOCAL.get('tasks');
+  const events      = LOCAL.get('events');
   const habits      = LOCAL.get('habits');
   const completions = LOCAL.get('habit_completions');
   const goals       = LOCAL.get('goals');
@@ -54,11 +55,12 @@ function renderDashboard() {
   const pinnedTasks = tasks.filter(t => !t.done && t.pinned);
   renderDashboardPinned(pinnedTasks);
 
-  // ── Today tasks list ──────────────────────────────
-  renderDashboardTasks(todayTasks);
+  // ── Today tasks list (+ today's calendar events) ──
+  const todayEvents = events.filter(e => e.date === today);
+  renderDashboardTasks(todayTasks, todayEvents);
 
-  // ── This week, grouped by day ──────────────────────
-  renderDashboardWeek(tasks, today);
+  // ── This week, grouped by day (tasks + events) ────
+  renderDashboardWeek(tasks, events, today);
 
   // ── Shopping list ──────────────────────────────────
   if (typeof renderShoppingList === 'function') renderShoppingList();
@@ -73,17 +75,19 @@ function renderDashboard() {
   renderDashboardGoals(activeGoals);
 }
 
-// ── This week: upcoming tasks grouped by day ──────────
-function renderDashboardWeek(tasks, today) {
+// ── This week: upcoming tasks + calendar events, by day ──
+function renderDashboardWeek(tasks, events, today) {
   const container = document.getElementById('dash-week-list');
   if (!container) return;
 
   const upcoming = tasks.filter(t => !t.done && t.task_type !== 'daily' && t.due_date && t.due_date > today);
-  if (!upcoming.length) {
+  const upcomingEvents = events.filter(e => e.date > today);
+
+  if (!upcoming.length && !upcomingEvents.length) {
     container.innerHTML = `
       <div class="dash-empty">
         <i class="ti ti-calendar-event"></i>
-        <span>Sin tareas programadas esta semana</span>
+        <span>Sin tareas ni eventos programados esta semana</span>
       </div>`;
     return;
   }
@@ -92,10 +96,13 @@ function renderDashboardWeek(tasks, today) {
   const catLabels = { trabajo:'Trabajo', personal:'Personal', estudio:'Estudio', salud:'Salud', otro:'Otro' };
   customCats.forEach(c => { catLabels['custom-' + c.id] = c.name; });
 
-  // Group by date, keep only the next 7 distinct upcoming days
-  const byDate = {};
-  upcoming.forEach(t => { (byDate[t.due_date] = byDate[t.due_date] || []).push(t); });
-  const dates = Object.keys(byDate).sort().slice(0, 7);
+  // Group tasks and events by date, keep only the next 7 distinct upcoming days
+  const tasksByDate = {};
+  upcoming.forEach(t => { (tasksByDate[t.due_date] = tasksByDate[t.due_date] || []).push(t); });
+  const eventsByDate = {};
+  upcomingEvents.forEach(e => { (eventsByDate[e.date] = eventsByDate[e.date] || []).push(e); });
+
+  const dates = [...new Set([...Object.keys(tasksByDate), ...Object.keys(eventsByDate)])].sort().slice(0, 7);
 
   const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
   const tomorrowStr = tomorrow.toISOString().split('T')[0];
@@ -107,10 +114,19 @@ function renderDashboardWeek(tasks, today) {
     else label = d.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'short' });
     label = label.charAt(0).toUpperCase() + label.slice(1);
 
-    const dayTasks = byDate[date];
+    const dayTasks  = tasksByDate[date]  || [];
+    const dayEvents = eventsByDate[date] || [];
+
     return `
       <div class="dash-week-day">
         <div class="dash-week-day-hdr">${label}</div>
+        ${dayEvents.map(e => `
+          <div class="dash-task-row dash-event-row" onclick="showSection('calendar'); selectDay('${date}')">
+            <span class="dash-event-dot"><i class="ti ti-calendar-event"></i></span>
+            <div class="dash-task-body">
+              <span class="dash-task-text">${escHtml(e.label)}</span>
+            </div>
+          </div>`).join('')}
         ${dayTasks.map(t => `
           <div class="dash-task-row" data-id="${t.id}" onclick="setView('inbox'); setTimeout(()=>openTaskDetail('${t.id}'),80)">
             <button class="task-check" onclick="event.stopPropagation(); toggleTask('${t.id}')" aria-label="Completar"></button>
@@ -149,11 +165,11 @@ function renderDashboardQuote() {
     </div>`;
 }
 
-function renderDashboardTasks(tasks) {
+function renderDashboardTasks(tasks, todayEvents = []) {
   const container = document.getElementById('dash-tasks-list');
   if (!container) return;
 
-  if (!tasks.length) {
+  if (!tasks.length && !todayEvents.length) {
     container.innerHTML = `
       <div class="dash-empty">
         <i class="ti ti-checks"></i>
@@ -166,7 +182,15 @@ function renderDashboardTasks(tasks) {
   const catLabels = { trabajo:'Trabajo', personal:'Personal', estudio:'Estudio', salud:'Salud', otro:'Otro' };
   customCats.forEach(c => { catLabels['custom-' + c.id] = c.name; });
 
-  container.innerHTML = tasks.slice(0, 8).map(t => {
+  const eventsHtml = todayEvents.map(e => `
+    <div class="dash-task-row dash-event-row" onclick="showSection('calendar'); selectDay('${e.date}')">
+      <span class="dash-event-dot"><i class="ti ti-calendar-event"></i></span>
+      <div class="dash-task-body">
+        <span class="dash-task-text">${escHtml(e.label)}</span>
+      </div>
+    </div>`).join('');
+
+  const tasksHtml = tasks.slice(0, 8).map(t => {
     const isDaily  = t.task_type === 'daily';
     const today    = todayStr();
     const overdue  = !t.done && t.due_date && t.due_date < today;
@@ -197,6 +221,8 @@ function renderDashboardTasks(tasks) {
         </div>
       </div>`;
   }).join('');
+
+  container.innerHTML = eventsHtml + tasksHtml;
 
   if (tasks.length > 8) {
     container.innerHTML += `

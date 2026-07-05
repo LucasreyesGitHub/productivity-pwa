@@ -1471,6 +1471,13 @@ input::placeholder { color: var(--text-3); }
 }
 .dash-week-day + .dash-week-day { padding-top: 4px; border-top: .5px solid var(--line); }
 
+.dash-event-dot {
+  width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--fill-2); color: var(--accent); font-size: 12px;
+}
+.dash-event-row .dash-task-text { font-style: italic; }
+
 /* ─── Agenda: lista de compras ──────────────────────────── */
 .shopping-add-row { display: flex; gap: 8px; margin-bottom: 12px; }
 .shopping-add-row input {
