@@ -2,7 +2,7 @@
 
 let realtimeChannel  = null;
 let navInitialized   = false;
-const ALL_SECTIONS   = ['dashboard','tasks','habits','goals','stats','calendar','ideas'];
+const ALL_SECTIONS   = ['dashboard','tasks','habits','goals','stats','calendar','ideas','quotes'];
 
 // ── Custom Categories ──────────────────────────────────
 const DEFAULT_CAT_COLORS = ['#0284c7','#ea580c','#7c3aed','#16a34a','#6b7280','#e11d48','#d97706','#0891b2'];
@@ -233,6 +233,7 @@ function showSection(name) {
     stats:     'Estadísticas',
     calendar:  'Calendario',
     ideas:     'Ideas',
+    quotes:    'Frases',
   };
   const titleEl = document.getElementById('page-title');
   if (titleEl) titleEl.textContent = sectionTitles[name] || name;
@@ -244,6 +245,7 @@ function showSection(name) {
   if (name === 'stats')     renderStats();
   if (name === 'calendar')  renderCal();
   if (name === 'ideas')     renderIdeas();
+  if (name === 'quotes')    renderQuotes();
 }
 
 // ── View navigation (task filters) ────────────────────
@@ -338,8 +340,11 @@ async function initApp(uid) {
     .on('postgres_changes', { event: '*', schema: 'public', table: 'ideas',            filter: 'user_id=eq.' + uid }, syncAll)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'habits',           filter: 'user_id=eq.' + uid }, syncAll)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'habit_completions',filter: 'user_id=eq.' + uid }, syncAll)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'habit_notes',      filter: 'user_id=eq.' + uid }, syncAll)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'goals',            filter: 'user_id=eq.' + uid }, syncAll)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'milestones',       filter: 'user_id=eq.' + uid }, syncAll)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'quotes',           filter: 'user_id=eq.' + uid }, syncAll)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'shopping_items',   filter: 'user_id=eq.' + uid }, syncAll)
     .subscribe(status => {
       if (status === 'CHANNEL_ERROR') console.warn('Realtime channel error — continuing with local data');
     });
@@ -362,6 +367,7 @@ const IOS_SECTION_TITLES = {
   stats:     'Estadísticas',
   calendar:  'Calendario',
   ideas:     'Ideas',
+  quotes:    'Frases',
 };
 
 let _iosCurrentTab = 'dashboard';
@@ -381,6 +387,7 @@ const IOS_SUBTITLES = {
   calendar: () => new Date().toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' }),
   stats:    () => 'Resumen de actividad',
   ideas:    () => 'Capturá lo que se te ocurre',
+  quotes:   () => 'Frases que te inspiran',
 };
 
 // ── Update iOS nav bar title + controls ────────────────
@@ -432,7 +439,7 @@ function iosTabNav(tab) {
   // Navigate to section (tasks → inbox by default)
   if (tab === 'tasks') {
     setView(currentView || 'inbox');
-  } else if (['dashboard','habits','goals','stats','calendar','ideas'].includes(tab)) {
+  } else if (['dashboard','habits','goals','stats','calendar','ideas','quotes'].includes(tab)) {
     showSection(tab);
   }
 
@@ -653,7 +660,7 @@ function initIosNav() {
     _orig(name);
     if (isMobile()) {
       iosUpdateNavbar(name);
-      const tabMap = { dashboard:'dashboard', tasks:'tasks', habits:'habits', goals:'goals', calendar:'calendar', stats:'more', ideas:'more' };
+      const tabMap = { dashboard:'dashboard', tasks:'tasks', habits:'habits', goals:'goals', calendar:'calendar', stats:'more', ideas:'more', quotes:'more' };
       const tabKey = tabMap[name] || 'more';
       document.querySelectorAll('.ios-tab').forEach(t => t.classList.toggle('active', t.dataset.iosTab === tabKey));
     }

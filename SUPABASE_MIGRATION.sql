@@ -87,6 +87,60 @@ CREATE POLICY "milestones: user owns rows"
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
--- ── 6. Realtime (opcional) ────────────────────────────────────
+-- ══════════════════════════════════════════════════════════════
+-- Mi Espacio — v6 Schema Migration (Agenda, Frases, Compras)
+-- ══════════════════════════════════════════════════════════════
+
+-- ── 7. Tabla habit_notes (comentario por día en hábitos) ───────
+CREATE TABLE IF NOT EXISTS habit_notes (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  habit_id   UUID NOT NULL REFERENCES habits(id) ON DELETE CASCADE,
+  user_id    UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  date       DATE NOT NULL,
+  note       TEXT NOT NULL,
+  UNIQUE (habit_id, date)
+);
+
+ALTER TABLE habit_notes ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "habit_notes: user owns rows"
+  ON habit_notes FOR ALL
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+-- ── 8. Tabla quotes (frases favoritas) ──────────────────────────
+CREATE TABLE IF NOT EXISTS quotes (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id    UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  text       TEXT NOT NULL,
+  author     TEXT,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE quotes ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "quotes: user owns rows"
+  ON quotes FOR ALL
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+-- ── 9. Tabla shopping_items (lista de compras) ──────────────────
+CREATE TABLE IF NOT EXISTS shopping_items (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id    UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  text       TEXT NOT NULL,
+  done       BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE shopping_items ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "shopping_items: user owns rows"
+  ON shopping_items FOR ALL
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+-- ── 10. Realtime (opcional) ──────────────────────────────────────
 -- Activar en: Supabase Dashboard → Database → Replication
--- Tablas a agregar al realtime: habits, habit_completions, goals, milestones
+-- Tablas a agregar al realtime: habits, habit_completions, habit_notes,
+-- goals, milestones, quotes, shopping_items

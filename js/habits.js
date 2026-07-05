@@ -1,4 +1,4 @@
-// habits.js — Habit tracking with streaks, completion rates and 7-day history
+// habits.js — Habit tracking with streaks, completion rates and a monthly streak grid
 
 // ── Helpers ────────────────────────────────────────────
 function getHabitCompletionDates(habitId) {
@@ -38,15 +38,127 @@ function getHabitRate(habitId, days = 7) {
   return Math.round((count / days) * 100);
 }
 
-function getLast7Days(habitId) {
+// ── Month streak grid (like a habit-tracker calendar) ──
+let habitsMonthOffset = 0;
+
+function changeHabitsMonth(delta) {
+  habitsMonthOffset += delta;
+  renderHabits();
+}
+
+function getMonthGrid(habitId, offset = 0) {
   const dates = getHabitCompletionDates(habitId);
-  return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() - (6 - i));
-    const ds = d.toISOString().split('T')[0];
-    const dayLabel = d.toLocaleDateString('es-AR', { weekday: 'short' }).charAt(0).toUpperCase();
-    return { date: ds, done: dates.includes(ds), label: dayLabel };
+  const base = new Date();
+  base.setDate(1);
+  base.setMonth(base.getMonth() + offset);
+  const year = base.getFullYear(), month = base.getMonth();
+
+  const firstDay     = new Date(year, month, 1);
+  const daysInMonth   = new Date(year, month + 1, 0).getDate();
+  const startOffset   = (firstDay.getDay() + 6) % 7; // Monday-first
+  const today         = todayStr();
+
+  const cells = [];
+  for (let i = 0; i < startOffset; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) {
+    const ds = `${year}-${String(month + 1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    cells.push({
+      date: ds, day: d,
+      done: dates.includes(ds),
+      note: getHabitNote(habitId, ds),
+      isFuture: ds > today,
+    });
+  }
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  const weeks = [];
+  for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
+
+  const label = firstDay.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
+  return { weeks, label: label.charAt(0).toUpperCase() + label.slice(1) };
+}
+
+// ── Per-day notes ──────────────────────────────────────
+function getHabitNote(habitId, date) {
+  const entry = LOCAL.get('habit_notes').find(n => n.habit_id === habitId && n.date === date);
+  return entry ? entry.note : '';
+}
+
+// ── Day detail popover: mark done/not-done + comment ──
+function openHabitDayPopover(habitId, date, anchorEl) {
+  document.getElementById('habit-day-popover')?.remove();
+
+  const completions = LOCAL.get('habit_completions');
+  const existing = completions.find(c => c.habit_id === habitId && c.date === date);
+  const done = !!existing;
+  const note = getHabitNote(habitId, date);
+
+  const dLabel = new Date(date + 'T12:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
+
+  const pop = document.createElement('div');
+  pop.id = 'habit-day-popover';
+  pop.className = 'habit-day-popover';
+  pop.innerHTML = `
+    <div class="hdp-date">${dLabel.charAt(0).toUpperCase() + dLabel.slice(1)}</div>
+    <button type="button" class="hdp-toggle ${done ? 'is-done' : ''}">
+      <i class="ti ${done ? 'ti-check' : 'ti-circle-dashed'}"></i>
+      <span>${done ? 'Cumplido' : 'Marcar como cumplido'}</span>
+    </button>
+    <textarea class="hdp-note" placeholder="Agregar un comentario…" rows="2">${escHtml(note)}</textarea>
+    <div class="hdp-actions">
+      <button type="button" class="hdp-cancel">Cancelar</button>
+      <button type="button" class="hdp-save">Guardar</button>
+    </div>`;
+  document.body.appendChild(pop);
+
+  let toggledDone = done;
+  pop.querySelector('.hdp-toggle').addEventListener('click', (e) => {
+    toggledDone = !toggledDone;
+    e.currentTarget.classList.toggle('is-done', toggledDone);
+    e.currentTarget.querySelector('i').className = 'ti ' + (toggledDone ? 'ti-check' : 'ti-circle-dashed');
+    e.currentTarget.querySelector('span').textContent = toggledDone ? 'Cumplido' : 'Marcar como cumplido';
   });
+
+  const close = () => pop.remove();
+  pop.querySelector('.hdp-cancel').addEventListener('click', close);
+  pop.querySelector('.hdp-save').addEventListener('click', async () => {
+    const noteVal = pop.querySelector('.hdp-note').value.trim();
+    await saveHabitDay(habitId, date, toggledDone, noteVal);
+    close();
+  });
+
+  // Position near anchor
+  const r = anchorEl.getBoundingClientRect();
+  const spaceBelow = window.innerHeight - r.bottom;
+  requestAnimationFrame(() => {
+    const popH = pop.offsetHeight;
+    const leftPos = Math.min(Math.max(r.left - 90, 8), window.innerWidth - pop.offsetWidth - 8);
+    pop.style.left = leftPos + 'px';
+    pop.style.top = spaceBelow > popH + 12 ? (r.bottom + 8) + 'px' : (r.top - popH - 8) + 'px';
+  });
+
+  setTimeout(() => {
+    document.addEventListener('click', function onDoc(e) {
+      if (!pop.contains(e.target) && e.target !== anchorEl) { pop.remove(); document.removeEventListener('click', onDoc); }
+    });
+  }, 0);
+}
+
+async function saveHabitDay(habitId, date, done, note) {
+  const completions = LOCAL.get('habit_completions');
+  const existing = completions.find(c => c.habit_id === habitId && c.date === date);
+
+  if (done && !existing) {
+    await dbAddHabitCompletion({ id: crypto.randomUUID(), habit_id: habitId, date });
+  } else if (!done && existing) {
+    await dbDeleteHabitCompletion(existing.id);
+  }
+
+  await dbSetHabitNote(habitId, date, note);
+
+  renderHabits();
+  renderDashboard();
+  updateHabitBadge();
 }
 
 // ── Toggle completion ─────────────────────────────────
@@ -82,6 +194,8 @@ function renderHabits() {
   const container = document.getElementById('habits-list');
   if (!container) return;
 
+  const dow = ['L','M','M','J','V','S','D'];
+
   if (!habits.length) {
     container.innerHTML = `
       <div class="empty-state">
@@ -89,14 +203,19 @@ function renderHabits() {
         <p class="empty-title">Sin hábitos todavía</p>
         <p class="empty-sub">Creá un hábito para empezar a construir tu rutina diaria</p>
       </div>`;
+    const monthLabelEl = document.getElementById('habits-month-label');
+    if (monthLabelEl) monthLabelEl.textContent = getMonthGrid('_', habitsMonthOffset).label;
     return;
   }
+
+  let sharedMonthLabel = '';
 
   container.innerHTML = habits.map(h => {
     const done   = isHabitDoneToday(h.id);
     const streak = getHabitStreak(h.id);
     const rate   = getHabitRate(h.id);
-    const last7  = getLast7Days(h.id);
+    const grid   = getMonthGrid(h.id, habitsMonthOffset);
+    sharedMonthLabel = grid.label;
     const color  = h.color || '#5b5bd6';
 
     return `
@@ -129,15 +248,29 @@ function renderHabits() {
             </div>
           </div>
         </div>
-        <div class="habit-history">
-          ${last7.map(d => `
-            <div class="habit-day" title="${d.date}">
-              <span class="habit-day-dot ${d.done ? 'done' : ''}"></span>
-              <span class="habit-day-label">${d.label}</span>
-            </div>`).join('')}
+        <div class="habit-month">
+          <div class="habit-month-dow">
+            ${dow.map(l => `<span>${l}</span>`).join('')}
+          </div>
+          <div class="habit-month-grid">
+            ${grid.weeks.map(week => week.map(cell => {
+              if (!cell) return '<span class="habit-month-day is-empty"></span>';
+              const cls = [cell.done ? 'done' : '', cell.isFuture ? 'is-future' : ''].filter(Boolean).join(' ');
+              const title = `${cell.date}${cell.note ? ' · ' + escHtml(cell.note) : ''}`;
+              return cell.isFuture
+                ? `<span class="habit-month-day ${cls}" title="${title}">${cell.day}</span>`
+                : `<button type="button" class="habit-month-day ${cls}" title="${title}"
+                    onclick="openHabitDayPopover('${h.id}','${cell.date}', this)">
+                    ${cell.day}${cell.note ? '<span class="habit-day-note-dot"></span>' : ''}
+                  </button>`;
+            }).join('')).join('')}
+          </div>
         </div>
       </div>`;
   }).join('');
+
+  const monthLabelEl = document.getElementById('habits-month-label');
+  if (monthLabelEl) monthLabelEl.textContent = sharedMonthLabel;
 }
 
 // ── Color selector ────────────────────────────────────

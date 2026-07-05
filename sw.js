@@ -1,10 +1,10 @@
-const CACHE = 'tareas-v6';
+const CACHE = 'tareas-v7';
 const STATIC = [
   '/', '/index.html', '/css/app.css',
   '/js/config.js', '/js/auth.js', '/js/db.js',
   '/js/tasks.js', '/js/habits.js', '/js/goals.js',
   '/js/dashboard.js', '/js/stats.js',
-  '/js/calendar.js', '/js/ideas.js', '/js/app.js',
+  '/js/calendar.js', '/js/ideas.js', '/js/quotes.js', '/js/shopping.js', '/js/app.js',
   '/manifest.json'
   // Bug #5 fix: removed /favicon.svg (it's an inline data URI, not a file)
 ];
