@@ -45,8 +45,91 @@ function getLast7Days(habitId) {
     d.setDate(d.getDate() - (6 - i));
     const ds = d.toISOString().split('T')[0];
     const dayLabel = d.toLocaleDateString('es-AR', { weekday: 'short' }).charAt(0).toUpperCase();
-    return { date: ds, done: dates.includes(ds), label: dayLabel };
+    return { date: ds, done: dates.includes(ds), label: dayLabel, note: getHabitNote(habitId, ds) };
   });
+}
+
+// ── Per-day notes ──────────────────────────────────────
+function getHabitNote(habitId, date) {
+  const entry = LOCAL.get('habit_notes').find(n => n.habit_id === habitId && n.date === date);
+  return entry ? entry.note : '';
+}
+
+// ── Day detail popover: mark done/not-done + comment ──
+function openHabitDayPopover(habitId, date, anchorEl) {
+  document.getElementById('habit-day-popover')?.remove();
+
+  const completions = LOCAL.get('habit_completions');
+  const existing = completions.find(c => c.habit_id === habitId && c.date === date);
+  const done = !!existing;
+  const note = getHabitNote(habitId, date);
+
+  const dLabel = new Date(date + 'T12:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
+
+  const pop = document.createElement('div');
+  pop.id = 'habit-day-popover';
+  pop.className = 'habit-day-popover';
+  pop.innerHTML = `
+    <div class="hdp-date">${dLabel.charAt(0).toUpperCase() + dLabel.slice(1)}</div>
+    <button type="button" class="hdp-toggle ${done ? 'is-done' : ''}">
+      <i class="ti ${done ? 'ti-check' : 'ti-circle-dashed'}"></i>
+      <span>${done ? 'Cumplido' : 'Marcar como cumplido'}</span>
+    </button>
+    <textarea class="hdp-note" placeholder="Agregar un comentario…" rows="2">${escHtml(note)}</textarea>
+    <div class="hdp-actions">
+      <button type="button" class="hdp-cancel">Cancelar</button>
+      <button type="button" class="hdp-save">Guardar</button>
+    </div>`;
+  document.body.appendChild(pop);
+
+  let toggledDone = done;
+  pop.querySelector('.hdp-toggle').addEventListener('click', (e) => {
+    toggledDone = !toggledDone;
+    e.currentTarget.classList.toggle('is-done', toggledDone);
+    e.currentTarget.querySelector('i').className = 'ti ' + (toggledDone ? 'ti-check' : 'ti-circle-dashed');
+    e.currentTarget.querySelector('span').textContent = toggledDone ? 'Cumplido' : 'Marcar como cumplido';
+  });
+
+  const close = () => pop.remove();
+  pop.querySelector('.hdp-cancel').addEventListener('click', close);
+  pop.querySelector('.hdp-save').addEventListener('click', async () => {
+    const noteVal = pop.querySelector('.hdp-note').value.trim();
+    await saveHabitDay(habitId, date, toggledDone, noteVal);
+    close();
+  });
+
+  // Position near anchor
+  const r = anchorEl.getBoundingClientRect();
+  const spaceBelow = window.innerHeight - r.bottom;
+  requestAnimationFrame(() => {
+    const popH = pop.offsetHeight;
+    const leftPos = Math.min(Math.max(r.left - 90, 8), window.innerWidth - pop.offsetWidth - 8);
+    pop.style.left = leftPos + 'px';
+    pop.style.top = spaceBelow > popH + 12 ? (r.bottom + 8) + 'px' : (r.top - popH - 8) + 'px';
+  });
+
+  setTimeout(() => {
+    document.addEventListener('click', function onDoc(e) {
+      if (!pop.contains(e.target) && e.target !== anchorEl) { pop.remove(); document.removeEventListener('click', onDoc); }
+    });
+  }, 0);
+}
+
+async function saveHabitDay(habitId, date, done, note) {
+  const completions = LOCAL.get('habit_completions');
+  const existing = completions.find(c => c.habit_id === habitId && c.date === date);
+
+  if (done && !existing) {
+    await dbAddHabitCompletion({ id: crypto.randomUUID(), habit_id: habitId, date });
+  } else if (!done && existing) {
+    await dbDeleteHabitCompletion(existing.id);
+  }
+
+  await dbSetHabitNote(habitId, date, note);
+
+  renderHabits();
+  renderDashboard();
+  updateHabitBadge();
 }
 
 // ── Toggle completion ─────────────────────────────────
@@ -131,10 +214,11 @@ function renderHabits() {
         </div>
         <div class="habit-history">
           ${last7.map(d => `
-            <div class="habit-day" title="${d.date}">
-              <span class="habit-day-dot ${d.done ? 'done' : ''}"></span>
+            <button type="button" class="habit-day" title="${d.date}${d.note ? ' · ' + escHtml(d.note) : ''}"
+              onclick="openHabitDayPopover('${h.id}','${d.date}', this)">
+              <span class="habit-day-dot ${d.done ? 'done' : ''}">${d.note ? '<span class="habit-day-note-dot"></span>' : ''}</span>
               <span class="habit-day-label">${d.label}</span>
-            </div>`).join('')}
+            </button>`).join('')}
         </div>
       </div>`;
   }).join('');

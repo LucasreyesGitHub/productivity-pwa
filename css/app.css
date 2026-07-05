@@ -1463,6 +1463,62 @@ input::placeholder { color: var(--text-3); }
 .dash-cat-card--add:hover { color: var(--accent); border-color: var(--accent); }
 .dash-cat-card--add:hover .dash-cat-name { color: var(--accent); }
 
+/* ─── Agenda: esta semana ───────────────────────────────── */
+.dash-week-list { display: flex; flex-direction: column; gap: 14px; }
+.dash-week-day-hdr {
+  font-size: 12px; font-weight: 700; color: var(--accent);
+  text-transform: uppercase; letter-spacing: .3px; margin-bottom: 4px;
+}
+.dash-week-day + .dash-week-day { padding-top: 4px; border-top: .5px solid var(--line); }
+
+/* ─── Agenda: lista de compras ──────────────────────────── */
+.shopping-add-row { display: flex; gap: 8px; margin-bottom: 12px; }
+.shopping-add-row input {
+  flex: 1; font-family: var(--font); font-size: 13px; padding: 9px 12px;
+  border: 1px solid var(--line-strong); border-radius: var(--r-sm);
+  background: var(--bg); color: var(--text);
+}
+.shopping-add-row .icon-btn { background: var(--accent); color: #fff; border-radius: var(--r-sm); }
+.shopping-add-row .icon-btn:hover { opacity: .9; background: var(--accent); }
+.shopping-list { display: flex; flex-direction: column; gap: 2px; max-height: 260px; overflow-y: auto; }
+.shopping-item {
+  display: flex; align-items: center; gap: 10px; padding: 7px 4px;
+  border-radius: var(--r-sm); transition: background .12s;
+}
+.shopping-item:hover { background: var(--accent-hover); }
+.shopping-item:hover .shopping-item-del { opacity: 1; }
+.shopping-item-text { flex: 1; font-size: 13px; min-width: 0; }
+.shopping-item.is-done .shopping-item-text { text-decoration: line-through; color: var(--text-3); }
+.shopping-item-del {
+  background: none; border: none; cursor: pointer; color: var(--text-3);
+  padding: 4px; border-radius: 6px; opacity: 0; transition: opacity .14s, color .14s, background .14s;
+}
+.shopping-item-del:hover { color: var(--danger); background: var(--danger-soft); }
+
+/* ─── Agenda: frase del día ──────────────────────────────── */
+.dash-quote { padding: 4px 2px; }
+.dash-quote .quote-mark { font-size: 18px; color: var(--accent); opacity: .5; }
+.dash-quote-text { font-size: 14px; line-height: 1.5; font-style: italic; color: var(--text); margin-top: 6px; }
+.dash-quote-author { font-size: 12px; color: var(--text-3); margin-top: 8px; }
+
+/* ─── Frases (quotes) ────────────────────────────────────── */
+.quotes-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px; margin-bottom: 16px;
+}
+.quote-card {
+  padding: 20px 18px; background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--r-lg); position: relative; box-shadow: var(--s1);
+  animation: slideUp .24s var(--ease-out) both;
+  transition: box-shadow .2s var(--ease-out), transform .2s var(--ease-out);
+}
+.quote-card:hover { box-shadow: var(--s2); transform: translateY(-2px); }
+.quote-card:hover .del-btn { opacity: 1; }
+.quote-mark { font-size: 18px; color: var(--accent); opacity: .4; display: block; margin-bottom: 8px; }
+.quote-text { font-size: 14px; line-height: 1.55; font-style: italic; color: var(--text); padding-right: 10px; }
+.quote-author { font-size: 12px; color: var(--text-3); margin-top: 10px; }
+.quote-del { position: absolute; top: 10px; right: 10px; }
+
 /* ─── Habits ────────────────────────────────────────────── */
 .habits-list { display: flex; flex-direction: column; gap: 10px; }
 .habit-card {
@@ -1492,10 +1548,54 @@ input::placeholder { color: var(--text-3); }
 .habit-streak i { font-size: 14px; }
 .habit-menu { display: flex; gap: 2px; }
 .habit-history { display: flex; gap: 4px; margin-top: 12px; padding-top: 12px; border-top: .5px solid var(--line); }
-.habit-day { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; }
-.habit-day-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--line-strong); transition: background .16s; }
+.habit-day {
+  display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1;
+  background: none; border: none; font-family: var(--font); cursor: pointer;
+  padding: 4px 2px; border-radius: var(--r-sm); transition: background .14s;
+}
+.habit-day:hover { background: var(--fill-2); }
+.habit-day-dot {
+  position: relative; width: 10px; height: 10px; border-radius: 50%;
+  background: var(--line-strong); transition: background .16s;
+}
 .habit-day-dot.done { background: var(--habit-color, var(--accent)); }
 .habit-day-label { font-size: 9px; color: var(--text-3); text-transform: uppercase; letter-spacing: .3px; }
+.habit-day-note-dot {
+  position: absolute; top: -3px; right: -4px; width: 5px; height: 5px;
+  border-radius: 50%; background: #f76b15; border: 1px solid var(--surface);
+}
+
+/* ─── Habit day popover (tick + comment) ────────────────── */
+.habit-day-popover {
+  position: fixed; z-index: 9999; width: 240px;
+  background: var(--surface); border: 1px solid var(--line-strong);
+  border-radius: var(--r-lg); padding: 14px; box-shadow: var(--s-float);
+  display: flex; flex-direction: column; gap: 10px;
+  animation: fadeIn .14s var(--ease-out);
+}
+.hdp-date { font-size: 12px; font-weight: 600; color: var(--text-2); }
+.hdp-toggle {
+  display: flex; align-items: center; gap: 8px; padding: 9px 10px;
+  border: 1.5px solid var(--line-strong); border-radius: var(--r-sm);
+  background: none; color: var(--text); font-family: var(--font); font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: all .16s var(--ease-out);
+}
+.hdp-toggle.is-done { background: var(--accent); border-color: var(--accent); color: #fff; }
+.hdp-note {
+  width: 100%; resize: vertical; min-height: 46px;
+  font-family: var(--font); font-size: 13px; padding: 8px 10px;
+  border: 1px solid var(--line-strong); border-radius: var(--r-sm);
+  background: var(--bg); color: var(--text);
+}
+.hdp-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.hdp-cancel, .hdp-save {
+  font-family: var(--font); font-size: 13px; font-weight: 600; cursor: pointer;
+  border-radius: var(--r-sm); padding: 6px 12px; border: none;
+}
+.hdp-cancel { background: none; color: var(--text-2); }
+.hdp-cancel:hover { background: var(--fill-2); }
+.hdp-save { background: var(--accent); color: #fff; }
+.hdp-save:hover { opacity: .9; }
 
 /* ─── Goals ─────────────────────────────────────────────── */
 .goal-filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
@@ -2080,7 +2180,7 @@ input::placeholder { color: var(--text-3); }
   .stat-card-icon { width: 36px; height: 36px; border-radius: 10px; font-size: 18px; }
   .stat-val    { font-size: 22px; }
   .dash-body   { grid-template-columns: 1fr; }
-  .dash-col--side { order: -1; }
+  .dash-col--side { order: 1; }
   .dash-top    { flex-direction: column; align-items: flex-start; gap: 16px; }
   .dash-greeting { font-size: 26px; }
   .dash-date   { font-size: 13px; }
@@ -2148,7 +2248,7 @@ input::placeholder { color: var(--text-3); }
 @media (max-width: 900px) and (min-width: 769px) {
   .dash-stats { grid-template-columns: repeat(2,1fr); }
   .dash-body { grid-template-columns: 1fr; }
-  .dash-col--side { order: -1; }
+  .dash-col--side { order: 1; }
   .goals-grid { grid-template-columns: 1fr; }
   .stats-cards { grid-template-columns: repeat(2,1fr); }
   .stats-grid  { grid-template-columns: 1fr; }

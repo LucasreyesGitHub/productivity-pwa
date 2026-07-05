@@ -239,6 +239,127 @@ async function dbDeleteHabitCompletion(id) {
   if (isOnline) sb.from('habit_completions').delete().eq('id', id).eq('user_id', userId).catch(() => {});
 }
 
+async function dbUpdateHabitCompletion(id, changes) {
+  const completions = LOCAL.get('habit_completions');
+  const idx = completions.findIndex(c => c.id === id);
+  if (idx !== -1) { Object.assign(completions[idx], changes); LOCAL.set('habit_completions', completions); }
+  if (isOnline) {
+    sb.from('habit_completions').update(changes).eq('id', id).eq('user_id', userId).catch(() => {});
+  }
+}
+
+// ── HABIT DAY NOTES (comments per day, independent of completion) ──
+async function dbGetHabitNotes() {
+  if (!isOnline) return LOCAL.get('habit_notes');
+  try {
+    const { data, error } = await sb.from('habit_notes').select('*').eq('user_id', userId);
+    if (error) throw error;
+    LOCAL.set('habit_notes', data);
+    return data;
+  } catch { return LOCAL.get('habit_notes'); }
+}
+
+async function dbSetHabitNote(habitId, date, note) {
+  const notes = LOCAL.get('habit_notes');
+  const idx = notes.findIndex(n => n.habit_id === habitId && n.date === date);
+
+  if (!note.trim()) {
+    // Empty note: remove it
+    if (idx !== -1) {
+      const [removed] = notes.splice(idx, 1);
+      LOCAL.set('habit_notes', notes);
+      if (isOnline && removed?.id) sb.from('habit_notes').delete().eq('id', removed.id).catch(() => {});
+    }
+    return null;
+  }
+
+  if (idx !== -1) {
+    notes[idx].note = note;
+    LOCAL.set('habit_notes', notes);
+    if (isOnline) sb.from('habit_notes').upsert({ ...notes[idx], user_id: userId }, { onConflict: 'habit_id,date' }).catch(() => {});
+    return notes[idx];
+  }
+
+  const item = { id: crypto.randomUUID(), habit_id: habitId, user_id: userId, date, note };
+  notes.push(item);
+  LOCAL.set('habit_notes', notes);
+  if (isOnline) sb.from('habit_notes').upsert(item, { onConflict: 'habit_id,date' }).catch(() => {});
+  return item;
+}
+
+// ── QUOTES (frases favoritas) ──────────────────────────
+async function dbGetQuotes() {
+  if (!isOnline) return LOCAL.get('quotes');
+  try {
+    const { data, error } = await sb.from('quotes').select('*').eq('user_id', userId).order('created_at', { ascending: false });
+    if (error) throw error;
+    LOCAL.set('quotes', data);
+    return data;
+  } catch { return LOCAL.get('quotes'); }
+}
+
+async function dbAddQuote(quote) {
+  const item = { ...quote, user_id: userId, created_at: new Date().toISOString() };
+  const quotes = LOCAL.get('quotes');
+  quotes.unshift(item);
+  LOCAL.set('quotes', quotes);
+  if (isOnline) {
+    sb.from('quotes').insert(item).select().single()
+      .then(({ data, error }) => {
+        if (!error && data) {
+          const all = LOCAL.get('quotes');
+          const idx = all.findIndex(q => q.id === item.id);
+          if (idx !== -1) { all[idx] = data; LOCAL.set('quotes', all); }
+        }
+      }).catch(() => {});
+  }
+  return item;
+}
+
+async function dbDeleteQuote(id) {
+  LOCAL.set('quotes', LOCAL.get('quotes').filter(q => q.id !== id));
+  if (isOnline) sb.from('quotes').delete().eq('id', id).eq('user_id', userId).catch(() => {});
+}
+
+// ── SHOPPING LIST ───────────────────────────────────────
+async function dbGetShoppingItems() {
+  if (!isOnline) return LOCAL.get('shopping_items');
+  try {
+    const { data, error } = await sb.from('shopping_items').select('*').eq('user_id', userId).order('created_at');
+    if (error) throw error;
+    LOCAL.set('shopping_items', data);
+    return data;
+  } catch { return LOCAL.get('shopping_items'); }
+}
+
+async function dbAddShoppingItem(text) {
+  const item = { id: crypto.randomUUID(), text, done: false, user_id: userId, created_at: new Date().toISOString() };
+  const items = LOCAL.get('shopping_items');
+  items.push(item);
+  LOCAL.set('shopping_items', items);
+  if (isOnline) sb.from('shopping_items').insert(item).catch(() => {});
+  return item;
+}
+
+async function dbUpdateShoppingItem(id, changes) {
+  const items = LOCAL.get('shopping_items');
+  const idx = items.findIndex(i => i.id === id);
+  if (idx !== -1) { Object.assign(items[idx], changes); LOCAL.set('shopping_items', items); }
+  if (isOnline) sb.from('shopping_items').update(changes).eq('id', id).eq('user_id', userId).catch(() => {});
+}
+
+async function dbDeleteShoppingItem(id) {
+  LOCAL.set('shopping_items', LOCAL.get('shopping_items').filter(i => i.id !== id));
+  if (isOnline) sb.from('shopping_items').delete().eq('id', id).eq('user_id', userId).catch(() => {});
+}
+
+async function dbClearCheckedShoppingItems() {
+  const items = LOCAL.get('shopping_items');
+  const toRemove = items.filter(i => i.done).map(i => i.id);
+  LOCAL.set('shopping_items', items.filter(i => !i.done));
+  if (isOnline && toRemove.length) sb.from('shopping_items').delete().in('id', toRemove).catch(() => {});
+}
+
 // ── GOALS ───────────────────────────────────────────────
 function _getDeletedGoalIds() {
   try { return JSON.parse(localStorage.getItem('deleted_goals_' + userId) || '[]'); }
@@ -381,7 +502,8 @@ async function syncAll() {
   try {
     await Promise.all([
       dbGetTasks(), dbGetEvents(), dbGetIdeas(),
-      dbGetHabits(), dbGetHabitCompletions(), dbGetGoals(), dbGetMilestones(),
+      dbGetHabits(), dbGetHabitCompletions(), dbGetHabitNotes(), dbGetGoals(), dbGetMilestones(),
+      dbGetQuotes(), dbGetShoppingItems(),
     ]);
     if (typeof renderTasks    === 'function') renderTasks();
     if (typeof renderCal      === 'function') renderCal();
@@ -390,6 +512,7 @@ async function syncAll() {
     if (typeof renderGoals    === 'function') renderGoals();
     if (typeof renderDashboard=== 'function') renderDashboard();
     if (typeof renderStats    === 'function') renderStats();
+    if (typeof renderQuotes   === 'function') renderQuotes();
     setSyncStatus('synced', 'Sincronizado');
   } catch {
     setSyncStatus('offline', 'Error de sync');

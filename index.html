@@ -217,6 +217,10 @@
             <i class="ti ti-bulb"></i>
             <span>Ideas</span>
           </button>
+          <button class="nav-item" data-section="quotes">
+            <i class="ti ti-quote"></i>
+            <span>Frases</span>
+          </button>
         </div>
       </nav>
 
@@ -304,10 +308,17 @@
             <div class="dash-col">
               <div class="dash-widget">
                 <div class="dash-widget-hdr">
-                  <h3>Tareas pendientes</h3>
-                  <button class="btn-link" onclick="setView('inbox')">Ver todas</button>
+                  <h3><i class="ti ti-sun"></i> Hoy</h3>
+                  <button class="btn-link" onclick="setView('today')">Ver todas</button>
                 </div>
                 <div id="dash-tasks-list" class="dash-task-list"></div>
+              </div>
+              <div class="dash-widget">
+                <div class="dash-widget-hdr">
+                  <h3><i class="ti ti-calendar-week"></i> Esta semana</h3>
+                  <button class="btn-link" onclick="setView('upcoming')">Ver todas</button>
+                </div>
+                <div id="dash-week-list" class="dash-week-list"></div>
               </div>
               <div class="dash-widget">
                 <div class="dash-widget-hdr">
@@ -318,6 +329,24 @@
               </div>
             </div>
             <div class="dash-col dash-col--side">
+              <div class="dash-widget dash-widget--shopping">
+                <div class="dash-widget-hdr">
+                  <h3><i class="ti ti-shopping-cart"></i> Lista de compras <span id="shopping-count" class="count-badge"></span></h3>
+                  <button class="btn-link" id="shopping-clear-btn" hidden>Limpiar</button>
+                </div>
+                <div class="shopping-add-row">
+                  <input type="text" id="shopping-input" placeholder="Agregar artículo…" autocomplete="off">
+                  <button class="icon-btn" id="shopping-add-btn" aria-label="Agregar"><i class="ti ti-plus"></i></button>
+                </div>
+                <div id="shopping-list" class="shopping-list"></div>
+              </div>
+              <div class="dash-widget dash-widget--quote">
+                <div class="dash-widget-hdr">
+                  <h3><i class="ti ti-quote"></i> Frase del día</h3>
+                  <button class="btn-link" onclick="showSection('quotes')">Ver todas</button>
+                </div>
+                <div id="dash-quote-widget"></div>
+              </div>
               <div class="dash-widget">
                 <div class="dash-widget-hdr">
                   <h3>Mis objetivos</h3>
@@ -490,6 +519,41 @@
           </div>
         </section>
 
+        <!-- ── QUOTES (Frases) ────────────────────────── -->
+        <section id="section-quotes" class="section hidden">
+          <div class="section-header">
+            <div>
+              <h2>Frases</h2>
+              <p class="section-sub">Guardá citas y frases que te inspiren <span id="quote-count" class="count-badge"></span></p>
+            </div>
+            <button class="btn-primary btn-sm" onclick="toggleQuoteForm()">
+              <i class="ti ti-plus"></i>
+              Nueva frase
+            </button>
+          </div>
+
+          <div id="quote-add-form" class="idea-add-form" hidden>
+            <div class="idea-form-card">
+              <div class="form-group">
+                <label for="quote-text">Frase</label>
+                <textarea id="quote-text" placeholder="Escribí la frase…" rows="2"></textarea>
+              </div>
+              <div class="idea-form-row">
+                <div class="form-group">
+                  <label for="quote-author">Autor <span class="optional">opcional</span></label>
+                  <input type="text" id="quote-author" placeholder="Ej: Séneca" autocomplete="off"
+                    onkeydown="if(event.key==='Enter')addQuote()">
+                </div>
+                <button class="btn-primary idea-form-submit" onclick="addQuote()">
+                  Guardar
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="quotes-grid" id="quotes-grid"></div>
+        </section>
+
       </main>
     </div><!-- app-body -->
   </div><!-- app-layout -->
@@ -618,6 +682,11 @@
         <button class="ios-more-item" onclick="iosTabNav('ideas');iosHideSheet()">
           <span class="ios-more-item-icon" style="background:#30D158"><i class="ti ti-bulb"></i></span>
           <span class="ios-more-item-label">Ideas</span>
+          <i class="ti ti-chevron-right ios-more-chevron"></i>
+        </button>
+        <button class="ios-more-item" onclick="iosTabNav('quotes');iosHideSheet()">
+          <span class="ios-more-item-icon" style="background:#FF375F"><i class="ti ti-quote"></i></span>
+          <span class="ios-more-item-label">Frases</span>
           <i class="ti ti-chevron-right ios-more-chevron"></i>
         </button>
       </div>
@@ -844,16 +913,18 @@
 </div>
 
 <!-- ══ SCRIPTS ═══════════════════════════════════════════ -->
-<script src="js/config.js?v=16"></script>
-<script src="js/auth.js?v=16"></script>
-<script src="js/db.js?v=16"></script>
-<script src="js/tasks.js?v=16"></script>
-<script src="js/habits.js?v=16"></script>
-<script src="js/goals.js?v=16"></script>
-<script src="js/dashboard.js?v=16"></script>
-<script src="js/stats.js?v=16"></script>
-<script src="js/calendar.js?v=16"></script>
-<script src="js/ideas.js?v=16"></script>
-<script src="js/app.js?v=16"></script>
+<script src="js/config.js?v=17"></script>
+<script src="js/auth.js?v=17"></script>
+<script src="js/db.js?v=17"></script>
+<script src="js/tasks.js?v=17"></script>
+<script src="js/habits.js?v=17"></script>
+<script src="js/goals.js?v=17"></script>
+<script src="js/dashboard.js?v=17"></script>
+<script src="js/stats.js?v=17"></script>
+<script src="js/calendar.js?v=17"></script>
+<script src="js/ideas.js?v=17"></script>
+<script src="js/quotes.js?v=17"></script>
+<script src="js/shopping.js?v=17"></script>
+<script src="js/app.js?v=17"></script>
 </body>
 </html>

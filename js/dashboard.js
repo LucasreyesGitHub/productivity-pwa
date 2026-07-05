@@ -17,8 +17,10 @@ function renderDashboard() {
     if (t.due_date) return 2;
     return 3;
   };
-  // Show all pending tasks, sorted by urgency: overdue → today/daily → upcoming → no date
-  const allForToday = tasks.filter(t => !t.done).sort((a, b) => getPriority(a) - getPriority(b));
+  // "Hoy": overdue + due today + daily tasks — everything that needs attention today
+  const todayTasks = tasks
+    .filter(t => !t.done && (t.task_type === 'daily' || (t.due_date && t.due_date <= today)))
+    .sort((a, b) => getPriority(a) - getPriority(b));
 
   const dailyHabits = habits.filter(h => h.frequency === 'daily');
   const doneHabits  = dailyHabits.filter(h => completions.some(c => c.habit_id === h.id && c.date === today));
@@ -53,13 +55,98 @@ function renderDashboard() {
   renderDashboardPinned(pinnedTasks);
 
   // ── Today tasks list ──────────────────────────────
-  renderDashboardTasks(allForToday);
+  renderDashboardTasks(todayTasks);
+
+  // ── This week, grouped by day ──────────────────────
+  renderDashboardWeek(tasks, today);
+
+  // ── Shopping list ──────────────────────────────────
+  if (typeof renderShoppingList === 'function') renderShoppingList();
+
+  // ── Quote of the day ───────────────────────────────
+  renderDashboardQuote();
 
   // ── Habits strip ──────────────────────────────────
   renderDashboardHabits(dailyHabits, completions, today);
 
   // ── Goals mini list ───────────────────────────────
   renderDashboardGoals(activeGoals);
+}
+
+// ── This week: upcoming tasks grouped by day ──────────
+function renderDashboardWeek(tasks, today) {
+  const container = document.getElementById('dash-week-list');
+  if (!container) return;
+
+  const upcoming = tasks.filter(t => !t.done && t.task_type !== 'daily' && t.due_date && t.due_date > today);
+  if (!upcoming.length) {
+    container.innerHTML = `
+      <div class="dash-empty">
+        <i class="ti ti-calendar-event"></i>
+        <span>Sin tareas programadas esta semana</span>
+      </div>`;
+    return;
+  }
+
+  const customCats = getCustomCategories ? getCustomCategories() : [];
+  const catLabels = { trabajo:'Trabajo', personal:'Personal', estudio:'Estudio', salud:'Salud', otro:'Otro' };
+  customCats.forEach(c => { catLabels['custom-' + c.id] = c.name; });
+
+  // Group by date, keep only the next 7 distinct upcoming days
+  const byDate = {};
+  upcoming.forEach(t => { (byDate[t.due_date] = byDate[t.due_date] || []).push(t); });
+  const dates = Object.keys(byDate).sort().slice(0, 7);
+
+  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
+  container.innerHTML = dates.map(date => {
+    const d = new Date(date + 'T12:00:00');
+    let label;
+    if (date === tomorrowStr) label = 'Mañana';
+    else label = d.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'short' });
+    label = label.charAt(0).toUpperCase() + label.slice(1);
+
+    const dayTasks = byDate[date];
+    return `
+      <div class="dash-week-day">
+        <div class="dash-week-day-hdr">${label}</div>
+        ${dayTasks.map(t => `
+          <div class="dash-task-row" data-id="${t.id}" onclick="setView('inbox'); setTimeout(()=>openTaskDetail('${t.id}'),80)">
+            <button class="task-check" onclick="event.stopPropagation(); toggleTask('${t.id}')" aria-label="Completar"></button>
+            <div class="dash-task-body">
+              <span class="dash-task-text">${escHtml(t.text)}</span>
+            </div>
+            <div class="dash-task-chips">
+              ${t.category ? `<span class="cat-chip cat-${t.category.startsWith('custom-') ? 'otro' : t.category}">${catLabels[t.category] || t.category}</span>` : ''}
+            </div>
+          </div>`).join('')}
+      </div>`;
+  }).join('');
+}
+
+// ── Quote of the day widget ────────────────────────────
+function renderDashboardQuote() {
+  const container = document.getElementById('dash-quote-widget');
+  if (!container) return;
+  const quote = typeof getQuoteOfTheDay === 'function' ? getQuoteOfTheDay() : null;
+
+  if (!quote) {
+    container.innerHTML = `
+      <div class="dash-empty">
+        <i class="ti ti-quote"></i>
+        <span>Guardá frases que te inspiren</span>
+        <button class="btn-link" onclick="showSection('quotes')">Agregar frase</button>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="dash-quote">
+      <i class="ti ti-quote quote-mark"></i>
+      <p class="dash-quote-text">${escHtml(quote.text)}</p>
+      ${quote.author ? `<p class="dash-quote-author">— ${escHtml(quote.author)}</p>` : ''}
+    </div>`;
 }
 
 function renderDashboardTasks(tasks) {
